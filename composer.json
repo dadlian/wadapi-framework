@@ -1,0 +1,25 @@
+{
+    "name": "dadlian/wadapi-framework",
+    "description": "The core library of the Wadapi PHP API Engine.",
+    "keywords": ["wadapi", "api", "framework","php","engine"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sven James",
+            "email": "sven@kycsar.com"
+        }
+    ],
+    "type": "library",
+    "require": {
+  		"php": ">=7.1",
+      "dadlian/addendum": "^1.0"
+    },
+    "require-dev": {
+		    "phpunit/phpunit": "6.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wadapi\\": "src/"
+        }
+    }
+}
