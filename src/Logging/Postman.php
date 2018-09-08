@@ -43,7 +43,7 @@
 			}
 
 			$Message = new Message(session_id(), $messageType, $message, $sender, $recipient);
-			self::$postOffice[$recipient][$Message->getId()] = $Message;
+			self::$postOffice[$recipient][md5(session_id().$messageType.$message.$sender.$recipient)] = $Message;
 		}
 
 		protected static function deliverSuccesses($index = null){
@@ -90,12 +90,14 @@
 			}
 
 			if(is_null($index)){
-				foreach($recipientMessages as $message){
-					unset(self::$postOffice[$recipient][$message->getId()]);
+				if(array_key_exists($recipient, self::$postOffice)){
+					foreach(self::$postOffice[$recipient] as $messageId => $message){
+						unset(self::$postOffice[$recipient][$messageId]);
+					}
 				}
 
-				foreach($globalMessages as $message){
-					unset(self::$postOffice["*"][$message->getId()]);
+				foreach(self::$postOffice["*"] as $messageId => $message){
+					unset(self::$postOffice["*"][$messageId]);
 				}
 
 				return array_merge($recipientMessages, $globalMessages);

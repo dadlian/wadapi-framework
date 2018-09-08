@@ -139,7 +139,7 @@
 			//Write Endpoint Statistics
 			$id++;
 			$date = date("Y-m-d");
-			$runtime = round(microtime(true)-$GLOBALS["scriptStartTime"],5);
+			$runtime = round(microtime(true)-SCRIPT_START,5);
 
 			$connection->query("INSERT INTO profiler_EndpointStatistic VALUES($id,$timestamp,$timestamp,$api,'$endpoint','$date',1,$runtime) ".
 						"ON DUPLICATE KEY UPDATE modified='$timestamp',requests=requests+1,runtime=runtime+$runtime");

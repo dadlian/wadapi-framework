@@ -2,7 +2,6 @@
 	namespace Wadapi\Persistence;
 
 	use Wadapi\Reflection\Mirror;
-	use Wadapi\System\SettingsManager;
 	use Wadapi\System\Detective;
 	use Wadapi\Utility\ArrayUtility;
 	use Wadapi\Utility\StringUtility;
@@ -21,7 +20,7 @@
 
 			//Verify that $className is a string
 			if(!is_string($className)){
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway find expects a string search class argument. ".
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway find expects a string search class argument. ".
 										gettype($className)." given.");
 				return;
 			}
@@ -35,7 +34,7 @@
 
 			//Verify that the argument $className is a PersistentClass
 			$reflectedClass = Mirror::reflectClass($className);
-			if(!$reflectedClass->descendsFrom('PersistentClass')){
+			if(!$reflectedClass->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway can only search for PersistentClass objects. ". $className.
 									" is not Persistent.");
 				return $objects;
@@ -53,14 +52,14 @@
 			}
 
 			//Test that searcher is actually a searcher object
-			if(!is_object($searcher) || get_class($searcher) != "Searcher"){
+			if(!is_object($searcher) || get_class($searcher) != "Wadapi\Persistence\Searcher"){
 				if(is_object($searcher)){
 					$type = get_class($searcher);
 				}else{
 					$type = gettype($searcher);
 				}
 
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Searcher class object argument as a searcher, $type given.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Searcher class object argument as a searcher, $type given.");
 				return $objects;
 			}
 
@@ -70,34 +69,35 @@
 			}
 
 			//Test that sorter is actually a sorter object
-			if(!is_object($sorter) || get_class($sorter) != "Sorter"){
+			if(!is_object($sorter) || get_class($sorter) != "Wadapi\Persistence\Sorter"){
 				if(is_object($sorter)){
 					$type = get_class($sorter);
 				}else{
 					$type = gettype($sorter);
 				}
 
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Sorter class object argument as a sorter, $type given.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Sorter class object argument as a sorter, $type given.");
 				return $objects;
 			}
 
 			if(!is_int($records)){
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer limit values, ".gettype($records)." given.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer limit values, ".gettype($records)." given.");
 				return $objects;
 			}else if($records < 0){
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find limit values must be greater than or equal to 0.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find limit values must be greater than or equal to 0.");
 				return $objects;
 			}
 
 			if(!is_int($start)){
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer start values, ".gettype($start)." given.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer start values, ".gettype($start)." given.");
 				return $objects;
 			}else if($start < 0){
-				Logger::fatal_error(_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find start values must be greater than or equal to 0.");
+				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find start values must be greater than or equal to 0.");
 				return $objects;
 			}
 
 			$class = Mirror::reflectClass($className);
+			$tableName = $class->getShortName();
 
 			//Construct a query and search for all objects matching it
 			$where = array();
@@ -141,7 +141,7 @@
 						$listTables = array();
 						while($annotation->isCollection()){
 							if(!$listTables){
-								$listTables[] = "$className".StringUtility::capitalise($property->getName());
+								$listTables[] = "$tableName".StringUtility::capitalise($property->getName());
 							}else{
 								$listTables[] = $listTables[sizeof($listTables)-1]."List";
 							}
@@ -238,7 +238,7 @@
 						Logger::warning(MessageUtility::DATA_ACCESS_ERROR, "SQLGateway cannot find $className objects using non-applicable comparator ".
 								"'{$condition}'.");
 						continue;
-					}else if(!$ownerClass->descendsFrom('PersistentClass')){
+					}else if(!$ownerClass->descendsFrom('Wadapi\Persistence\PersistentClass')){
 						Logger::warning(MessageUtility::DATA_ACCESS_ERROR, "SQLGateway cannot find $className objects using non-persistent owner ".
 								"'{$criterion->getField()}'.");
 						continue;
@@ -325,18 +325,18 @@
 			}
 
 			//We want to search and select fields from the full class hierarchy
-			$persistentClass = Mirror::reflectClass('PersistentClass');
+			$persistentClass = Mirror::reflectClass('Wadapi\Persistence\PersistentClass');
 			$classHierarchy = array_diff($reflectedClass->getClassHierarchy(),$persistentClass->getClassHierarchy());
 
 			$index = 97;
 			$label = chr($index);
 			$previousLabel = $label;
-			$fromTable = "$className AS $label";
+			$fromTable = "$tableName AS $label";
 			foreach(array_reverse($classHierarchy) as $class){
 				if($className != $class->getName()){
 					$index++;
 					$label = chr($index);
-					$fromTable .= " JOIN {$class->getName()} AS $label ON $previousLabel.id = $label.id";
+					$fromTable .= " JOIN {$class->getShortName()} AS $label ON $previousLabel.id = $label.id";
 					$previousLabel = $label;
 				}
 			}
@@ -362,7 +362,7 @@
 				$whereArguments = $filteredWhereArguments;
 			}
 
-			$results = call_user_func_array(array('DatabaseAdministrator','execute'),array_merge(array($query),$whereArguments));
+			$results = call_user_func_array(array('Wadapi\Persistence\DatabaseAdministrator','execute'),array_merge(array($query),$whereArguments));
 			$data = array();
 
 			foreach($results as $result){
@@ -390,7 +390,7 @@
 						$containedClass = $property->getAnnotation()->getObjectClass();
 						$reflectedClass = Mirror::reflectClass($containedClass);
 
-						if(!$reflectedClass->descendsFrom("PersistentClass")){
+						if(!$reflectedClass->descendsFrom("Wadapi\Persistence\PersistentClass")){
 							continue;
 						}
 
@@ -459,7 +459,7 @@
 
 			foreach($saveObjects as $saveObject){
 				if(!is_object($saveObject) || !$this->checkUpdateParameters($saveObject)){
-					Logger::fatal_error(_error(MessageUtility::DATA_MODIFY_ERROR, "Only objects of PersistentClass can be saved via a Gateway");
+					Logger::fatal_error(MessageUtility::DATA_MODIFY_ERROR, "Only objects of PersistentClass can be saved via a Gateway");
 					return;
 				}
 
@@ -478,19 +478,19 @@
 
 			foreach($deleteObjects as $deleteObject){
 				if(!is_object($deleteObject) || !$this->checkUpdateParameters($deleteObject)){
-					Logger::fatal_error(_error(MessageUtility::DATA_MODIFY_ERROR, "A SQLGateway can only delete PersistentClass Objects.");
+					Logger::fatal_error(MessageUtility::DATA_MODIFY_ERROR, "A SQLGateway can only delete PersistentClass Objects.");
 					return;
 				}
 
 				$classHierarchy = array_diff(Mirror::reflectClass($deleteObject)->getParentClass()->getClassHierarchy(),
-								Mirror::reflectClass("PersistentClass")->getClassHierarchy());
+								Mirror::reflectClass("Wadapi\Persistence\PersistentClass")->getClassHierarchy());
 
 				$class = $classHierarchy?array_shift($classHierarchy):Mirror::reflectClass($deleteObject);
 				if(!array_key_exists($class->getName(),$oldObjectMap)){
-					$oldObjectMap[$class->getName()] = array();
+					$oldObjectMap[$class->getShortName()] = array();
 				}
 
-				$oldObjectMap[$class->getName()][] = $deleteObject->getId();
+				$oldObjectMap[$class->getShortName()][] = $deleteObject->getId();
 
 				//Enqueue old files for deletion
 				foreach($class->getProperties() as $property){
@@ -514,7 +514,7 @@
 			//Delete old files
 			foreach($oldFileList as $oldFile){
 				if($oldFile){
-					unlink(SettingsManager::getSetting('install','path')."/$oldFile");
+					unlink(PROJECT_PATH."/$oldFile");
 				}
 			}
 		}
@@ -532,7 +532,7 @@
 			$classHierarchy = $saveObjectClass->getClassHierarchy();
 
 			//Remove parents of PersistentClass from hierarchy
-			$persistentClass = Mirror::reflectClass("PersistentClass");
+			$persistentClass = Mirror::reflectClass("Wadapi\Persistence\PersistentClass");
 			$classHierarchy = array_diff($classHierarchy, $persistentClass->getClassHierarchy());
 
 			//Write each class component of the saveObject's hierarchy to the corresponding database table
@@ -563,14 +563,14 @@
 					$saveValues = array_merge($insertValues,$updateValues);
 
 					//Build Save Query
-					$saveQuery = "INSERT INTO {$class->getName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
+					$saveQuery = "INSERT INTO {$class->getShortName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
 							"ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
 
 					//Execute the save query and pass in the extracted parameters
-					call_user_func_array(array("DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
+					call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
 				//Write classes without properties only when they are not already persisted
 				}else if(!$saveObject->isPersisted()){
-					DatabaseAdministrator::execute("INSERT INTO {$class->getName()}(id,created,modified) VALUES(?,?,?)",
+					DatabaseAdministrator::execute("INSERT INTO {$class->getShortName()}(id,created,modified) VALUES(?,?,?)",
 										$saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified());
 				}
 
@@ -634,7 +634,7 @@
 
 				if($staleKeys){
 					$storedElementDeleteQuery .= " AND name IN (".implode(",",array_fill(0,sizeof($staleKeys),"?")).")";
-					call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($storedElementDeleteQuery),$staleKeys));
+					call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"),array_merge(array($storedElementDeleteQuery),$staleKeys));
 				}
 			}else{
 				DatabaseAdministrator::execute($storedElementDeleteQuery);
@@ -691,7 +691,7 @@
 					$writeListQuery .= ", value=VALUES(value)";
 				}
 
-				call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$values));
+				call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$values));
 			}
 		}
 
@@ -752,7 +752,7 @@
 			}
 
 			$arguments = array();
-			foreach(array_diff($class->getProperties(), Mirror::reflectClass('PersistentClass')->getProperties()) as $property){
+			foreach(array_diff($class->getProperties(), Mirror::reflectClass('Wadapi\Persistence\PersistentClass')->getProperties()) as $property){
 				$field = $property->getName();
 
 				if(!array_key_exists($field, $data)){

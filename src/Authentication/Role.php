@@ -1,9 +1,9 @@
 <?php
 	namespace Wadapi\Authentication;
 
-	use Wadapi\Persistence\PersistentClass;
+	use Wadapi\System\WadapiClass;
 
-	class Role extends PersistentClass{
+	class Role extends WadapiClass{
 		/** @Collection(type=@WadapiString) */
 		protected $permissions;
 	}

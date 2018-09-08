@@ -6,7 +6,7 @@
 	use Wadapi\Logging\Logger;
 
 	class Sorter extends WadapiClass{
-		/** @Collection(type=@WadapiObject(class='Criterion')) */
+		/** @Collection(type=@WadapiObject(class='Wadapi\Persistence\Criterion')) */
 		protected $criteria;
 
 		/*

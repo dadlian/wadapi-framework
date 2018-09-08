@@ -3,7 +3,7 @@
 
 	use Wadapi\System\WadapiClass;
 	use Wadapi\Reflection\Mirror;
-	
+
 	abstract class Gateway extends WadapiClass{
 		//Gateway Comparison Type Constants (for find method)
 		const IS_EQUAL = "==";
@@ -24,7 +24,7 @@
 
 			//Check that the specified $className is a PersistentClass
 			$class = Mirror::reflectClass($className);
-			if(!$class->descendsFrom("PersistentClass")){
+			if(!$class->descendsFrom("Wadapi\Persistence\PersistentClass")){
 				return false;
 			}
 
@@ -51,7 +51,7 @@
 
 			//Check that the specified $updateObject is a PersistentClass
 			$updateObjectClass = Mirror::reflectClass($updateObject);
-			if(!$updateObjectClass->descendsFrom("PersistentClass")){
+			if(!$updateObjectClass->descendsFrom("Wadapi\Persistence\PersistentClass")){
 				return false;
 			}
 

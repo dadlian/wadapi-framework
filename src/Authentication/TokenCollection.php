@@ -14,7 +14,7 @@
 			$searcher = new Searcher();
 			$searcher->addCriterion("id",Criterion::EQUAL,$this->viewFromArguments("access"));
 
-			$token = $sqlGateway->findUnique("APIToken",$searcher);
+			$token = $sqlGateway->findUnique("Wadapi\Authentication\APIToken",$searcher);
 			$lifetime = $this->getFromContent("lifetime")?$this->getFromContent("lifetime"):0;
 			$accessTokens = $token->refresh($lifetime);
 			$sqlGateway->save($token);

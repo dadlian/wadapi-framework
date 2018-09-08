@@ -9,8 +9,7 @@
 
 		public function __construct(){
 			//Load User Endpoints
-			$path = SettingsManager::getSetting("install","path");
-			$userEndpoints = json_decode(file_get_contents("$path/endpoints.json"),true);
+			$userEndpoints = json_decode(file_get_contents(PROJECT_PATH."/endpoints.json"),true);
 			$this->endpoints = array_key_exists("endpoints",$userEndpoints)?$userEndpoints['endpoints']:array();
 
 			//Add System Endpoints
@@ -20,7 +19,7 @@
 			$this->endpoints[] = [
 	      "name"=>"Access Collection",
 	      "path"=>"access",
-	      "controller"=>"AccessCollection",
+	      "controller"=>"Wadapi\Authentication\AccessCollection",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
 	      "parameters"=>[],
 	      "requirements"=>["role"]
@@ -29,7 +28,7 @@
 			$this->endpoints[] = [
 	      "name"=>"Access Resource",
 	      "path"=>"access/@",
-	      "controller"=>"AccessResource",
+	      "controller"=>"Wadapi\Authentication\AccessResource",
 	      "roles"=>["authenticator"=>$authenticatorReadWrite],
 	      "parameters"=>["access"],
 	      "requirements"=>["role"]
@@ -38,7 +37,7 @@
 			$this->endpoints[] = [
 	      "name"=>"Token Collection",
 	      "path"=>"access/@/tokens",
-	      "controller"=>"TokenCollection",
+	      "controller"=>"Wadapi\Authentication\TokenCollection",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
 	      "parameters"=>["access"],
 	      "requirements"=>[]
@@ -47,7 +46,7 @@
 			$this->endpoints[] = [
 	      "name"=>"Token Resource",
 	      "path"=>"access/@/tokens/active",
-	      "controller"=>"TokenResource",
+	      "controller"=>"Wadapi\Authentication\TokenResource",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
 	      "parameters"=>["access"],
 	      "requirements"=>[]

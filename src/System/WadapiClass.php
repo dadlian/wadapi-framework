@@ -466,17 +466,17 @@
 		   * Method returns the default value for each field annotation type
 		   */
 		  private function getDefault($annotation){
-			if($annotation->isNumeric()){
-				return 0;
-			}else if($annotation->isBoolean()){
-				return false;
-			}else if($annotation->isString()){
-				return "";
-			}else if($annotation->isObject()){
-				return null;
-			}else if($annotation->isCollection()){
-				return null;
-			}
+				if($annotation->isNumeric()){
+					return 0;
+				}else if($annotation->isBoolean()){
+					return false;
+				}else if($annotation->isString()){
+					return "";
+				}else if($annotation->isObject()){
+					return null;
+				}else if($annotation->isCollection()){
+					return null;
+				}
 		  }
 
 		  //Compares collection properties recursively

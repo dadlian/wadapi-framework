@@ -2,7 +2,6 @@
 	namespace Wadapi\Persistence;
 
 	use Wadapi\Reflection\Mirror;
-	use Wadapi\System\SettingsManager;
 	use Wadapi\Routing\URLPattern;
 	use Wadapi\Utility\ArrayUtility;
 	use Wadapi\Utility\StringUtility;
@@ -20,11 +19,7 @@
 		 * XMLGateway constructor initialises xmlRoot
 		 */
 		public function __construct($initialDatasource){
-			$settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
-			$environment = json_decode(file_get_contents(dirname(__FILE__)."/../../../environments.json"),true);
-			$path = $environment[$settings["environment"]]["install"]["path"];
-
-			parent::__construct(preg_replace("/".preg_replace("/\//","\/",$path)."/","",$initialDatasource));
+			parent::__construct(preg_replace("/".preg_replace("/\//","\/",PROJECT_PATH)."/","",$initialDatasource));
 			$this->setXmlRoot($path.$this->getDatasource());
 		}
 
@@ -148,7 +143,7 @@
 			$dom->preserveWhiteSpace = false;
 			$dom->formatOutput = true;
 			$dom->loadXML($this->xmlRoot->asXML());
-			$dom->save(SettingsManager::getSetting('install','path')."/".$this->getDatasource());
+			$dom->save(PROJECT_PATH."/".$this->getDatasource());
 
 			return true;
 		}
@@ -197,7 +192,7 @@
 				}
 			}
 
-			$this->xmlRoot->saveXml(SettingsManager::getSetting('install','path')."/".$this->getDatasource());
+			$this->xmlRoot->saveXml(PROJECT_PATH."/".$this->getDatasource());
 			return true;
 		}
 
@@ -297,7 +292,7 @@
 					$nextElement = $this->loadList($listElementChildren[0]);
 				}else if($listType->isObject() && class_exists($listType->getObjectClass())){
 					$class = Mirror::reflectClass($listType->getObjectClass());
-					if($class->descendsFrom('PersistentClass')){
+					if($class->descendsFrom('Wadapi\Persistence\PersistentClass')){
 						$listElementChildren = $listElement->children();
 						$nextElement = $this->loadObject($listType->getObjectClass(),$listElement);
 					}else{

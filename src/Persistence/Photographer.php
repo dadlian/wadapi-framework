@@ -19,7 +19,7 @@
 		protected static function takeSnapshot($object,$field = ""){
 			//Verify that the argument $object is a PersistentClass
 			$class = Mirror::reflectClass($object);
-			if(!$class->descendsFrom('PersistentClass')){
+			if(!$class->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of PersistentClass objects.");
 				return;
 			}
@@ -59,7 +59,7 @@
 		 protected static function getSnapshot($object,$field=""){
 			//Verify that the argument $object is a PersistentClass
 			$class = Mirror::reflectClass($object);
-			if(!$class->descendsFrom('PersistentClass')){
+			if(!$class->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "Photographer only stores snapshots of PersistentClass objects.");
 				return;
 			}
@@ -88,7 +88,7 @@
 		protected static function compareToSnapshot($object,$field=""){
 			//Verify that the argument $className is a PersistentClass
 			$class = Mirror::reflectClass($object);
-			if(!$class->descendsFrom('PersistentClass')){
+			if(!$class->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of PersistentClass objects.");
 				return;
 			}

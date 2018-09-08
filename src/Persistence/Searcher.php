@@ -7,7 +7,7 @@
 	use Wadapi\Logging\Logger;
 
 	class Searcher extends WadapiClass{
-		/** @Collection(type=@WadapiObject(class='Criterion')) */
+		/** @Collection(type=@WadapiObject(class='Wadapi\Persistence\Criterion')) */
 		protected $criteria;
 
 		/*
@@ -62,7 +62,7 @@
 				$class = Mirror::reflectClass($value);
 			}
 
-			if($class && $class->descendsFrom('PersistentClass')){
+			if($class && $class->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				$value = $value->getId();
 			}else if($class || is_array($value)){
 				$type = gettype($value);

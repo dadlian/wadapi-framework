@@ -49,7 +49,7 @@
 			$rootKey = md5(md5(time()*rand()*rand()));
 			$rootSecret = md5(md5(time()*rand()*rand()));
 			$searcher->addCriterion("role",Criterion::EQUAL,"root");
-			if(!$sqlGateway->findUnique("APIToken",$searcher)){
+			if(!$sqlGateway->findUnique("Wadapi\Authentication\APIToken",$searcher)){
 				$sqlGateway->save(new APIToken("root",0,md5($rootKey),md5($rootSecret),md5($rootKey.$rootSecret)));
 			}
 
@@ -58,7 +58,7 @@
 			$authenticatorSecret = md5(md5(time()*rand()*rand()));
       $searcher->clearCriteria();
 			$searcher->addCriterion("role",Criterion::EQUAL,"authenticator");
-			if(!$sqlGateway->findUnique("APIToken",$searcher)){
+			if(!$sqlGateway->findUnique("Wadapi\Authentication\APIToken",$searcher)){
 				$sqlGateway->save(new APIToken("authenticator",0,md5($authenticatorKey),md5($authenticatorSecret),md5($authenticatorKey.$authenticatorSecret)));
 			}
 

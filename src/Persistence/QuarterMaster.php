@@ -30,7 +30,7 @@
 
 			//Check that the specified $object is an object of PersistentClass
 			$objectClass = Mirror::reflectClass($object);
-			if(!$objectClass->descendsFrom("PersistentClass")){
+			if(!$objectClass->descendsFrom("Wadapi\Persistence\PersistentClass")){
 				Logger::warning(MessageUtility::CACHE_LOAD_WARNING, "Object of class ".get_class($object)." is not a descendant ".
 								 "of PersistentClass and cannot be stored in cache.");
 				return false;

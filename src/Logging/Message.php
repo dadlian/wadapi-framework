@@ -1,9 +1,7 @@
 <?php
 	namespace Wadapi\Logging;
 
-	use Wadapi\Persistence\PersistentClass;
-
-	class Message extends PersistentClass{
+	class Message{
 		const ERROR = 'error';
 		const WARNING = 'warning';
 		const SUCCESS = 'success';
@@ -28,5 +26,33 @@
 		//The intended message recipient
 		/** @WadapiString */
 		protected $recipient;
+
+		function __construct($initialSession, $initialType, $initialText, $initialSender, $initialRecipient){
+			$this->session = $initialSession;
+			$this->type = $initialType;
+			$this->text = $initialText;
+			$this->sender = $initialSender;
+			$this->recipient = $initialRecipient;
+		}
+
+		function getId(){
+			return md5($this->session.$this->type.$this->text.$this->sender.$this->recipient);
+		}
+
+		function getType(){
+			return $this->type;
+		}
+
+		function getText(){
+			return $this->text;
+		}
+
+		function getSender(){
+			return $this->sender;
+		}
+
+		function getRecipient(){
+			return $this->recipient;
+		}
 	}
 ?>

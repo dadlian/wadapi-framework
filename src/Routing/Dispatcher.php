@@ -6,14 +6,16 @@
 	use Wadapi\Persistence\Searcher;
 	use Wadapi\Http\RequestHandler;
 	use Wadapi\Http\ResponseHandler;
-	
+	use Wadapi\Reflection\Mirror;
+
 	class Dispatcher extends Worker{
 		protected static function dispatchRequest(){
 			$sqlGateway = new SQLGateway();
 			$searcher = new Searcher();
 
 			//If there is no controller mapped to this endpoint
-			if(!RequestHandler::getEndpoint() || !class_exists(RequestHandler::getEndpoint()->getController()) || !Mirror::reflectClass(RequestHandler::getEndpoint()->getController())->descendsFrom("ResourceController")){
+			if(!RequestHandler::getEndpoint() || !class_exists(RequestHandler::getEndpoint()->getController()) ||
+					!Mirror::reflectClass(RequestHandler::getEndpoint()->getController())->descendsFrom("Wadapi\Http\ResourceController")){
 				ResponseHandler::missing("The requested endpoint /".RequestHandler::getRequestURI()." does not exist on this server.");
 			}
 

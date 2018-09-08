@@ -7,6 +7,7 @@
 	use Wadapi\Persistence\SQLGateway;
 	use Wadapi\Persistence\Searcher;
 	use Wadapi\Persistence\Sorter;
+	use Wadapi\Persistence\Criterion;
 	use Wadapi\Persistence\CryptKeeper;
 
 	abstract class ResourceController extends Controller{

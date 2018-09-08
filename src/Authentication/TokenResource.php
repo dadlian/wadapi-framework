@@ -8,7 +8,7 @@
 
 	class TokenResource extends ResourceController{
 		public function delete(){
-			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
+			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
 
 			if(in_array($token->getRole(),array("root","authenticator"))){
 				ResponseHandler::conflict("The {$token->getRole()} access tokens cannot be invalidated.");

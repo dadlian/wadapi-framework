@@ -85,7 +85,7 @@
 				self::manageTableForClass($nextClass);
 			}
 
-			$createStatement = "CREATE TABLE {$class->getName()}(";
+			$createStatement = "CREATE TABLE {$class->getShortName()}(";
 			$idType = "";
 
 			foreach($classProperties as $property){
@@ -208,7 +208,7 @@
 		 */
 		private static function alterTableForClass($class){
 			//Get table description
-			$tableName = $class->getName();
+			$tableName = $class->getShortName();
 			$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
 			$classProperties = $class->getProperties(false);
 			$tableFieldTypeMap = array();
@@ -216,7 +216,7 @@
 
 			//Check that necessary parent tables exist. Create them if not
 			$classHierarchy = $class->getParentClass()->getClassHierarchy();
-			$persistentClass = Mirror::reflectClass("PersistentClass");
+			$persistentClass = Mirror::reflectClass("Wadapi\Persistence\PersistentClass");
 			$classHierarchy = array_diff($classHierarchy, $persistentClass->getClassHierarchy());
 
 			foreach($classHierarchy as $nextClass){

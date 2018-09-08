@@ -191,7 +191,7 @@
 				$sqlGateway = new SQLGateway();
 				$searcher = new Searcher();
 				$searcher->addCriterion("accessKey",Criterion::EQUAL,md5($authorisation["key"]));
-				self::$authenticatedToken = $sqlGateway->findUnique("APIToken",$searcher);
+				self::$authenticatedToken = $sqlGateway->findUnique("Wadapi\Authentication\APIToken",$searcher);
 			}
 
 			return self::$authenticatedToken;
@@ -227,7 +227,7 @@
 
 				$image = @imagecreatefromstring(self::$request->getBody());
 				if($image){
-					$tmpFile = SettingsManager::getSetting("install","path")."/temp-image-validate-".time();
+					$tmpFile = PROJECT_PATH."/temp-image-validate-".time();
 					fwrite(fopen($tmpFile,"w"),self::$request->getBody());
 					$mimeType = finfo_file(finfo_open(FILEINFO_MIME_TYPE),$tmpFile);
 					unlink($tmpFile);
@@ -297,7 +297,7 @@
 			}
 
 			//Set request body to raw input value
-			$headers = getallheaders();
+			$headers = self::getAllHeaders();
 			$body = file_get_contents("php://input");
 
 			$contentLength = array_key_exists("Content-Length",$headers)?intval($headers['Content-Length']):0;
@@ -305,7 +305,7 @@
 			ResponseHandler::changeContentCharset(self::$acceptables['Content-Charset'][0]);
 			ResponseHandler::changeContentLanguage(self::$acceptables['Content-Language'][0]);
 			self::$request = new Request($_SERVER['HTTP_HOST'],preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),
-								$_SERVER['REQUEST_METHOD'],$arguments,getallheaders(),
+								$_SERVER['REQUEST_METHOD'],$arguments,self::getAllHeaders(),
 								self::$acceptables['Content-Type'][0],$contentLength,$body);
 		}
 
@@ -328,7 +328,7 @@
 				$supportedValues = ["*"];
 			}
 
-			$headers = getallheaders();
+			$headers = self::getAllHeaders();
 			$acceptHeader = array_key_exists($header,$headers)?$headers[$header]:$defaultValue;
 			if(!preg_match("/([\w\/\+\*(\*\/\*)]+(;q\=[0-9\.]+)?,?)+/",$acceptHeader)){
 				ResponseHandler::bad("The $header Header was malformed.");
@@ -379,6 +379,17 @@
 			$requestURI = preg_replace("/^\//","",$requestURI);
 
 			return $requestURI;
+		}
+
+		private static function getAllHeaders(){
+			$headers = [];
+			foreach ($_SERVER as $name => $value) {
+				if (substr($name, 0, 5) == 'HTTP_') {
+					$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+				}
+			}
+
+			return $headers;
 		}
 	}
 ?>

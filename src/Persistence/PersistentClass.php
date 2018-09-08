@@ -50,7 +50,7 @@
 		/*
 		 * An instance of the Gateway type used to load this object
 		 */
-		/** @WadapiObject(class='Gateway') */
+		/** @WadapiObject(class='Wadapi\Persistence\Gateway') */
 		protected $gateway;
 
 		/*
@@ -362,7 +362,7 @@
 
 			//Find list all class properties including those of parents
 			$class = Mirror::reflectClass($className);
-			$persistentClass = Mirror::reflectClass("PersistentClass");
+			$persistentClass = Mirror::reflectClass("Wadapi\Persistence\PersistentClass");
 			$propertyList = array_diff($class->getProperties(),$persistentClass->getProperties());
 			$presetData = array();
 

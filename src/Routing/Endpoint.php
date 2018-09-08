@@ -1,9 +1,9 @@
 <?php
 	namespace Wadapi\Routing;
 
-	use Wadapi\Persistence\PersistentClass;
+	use Wadapi\System\WadapiClass;
 
-	class Endpoint extends PersistentClass{
+	class Endpoint extends WadapiClass{
 		/*
 		 * The unique name that identifies this endpoint
 		 */
@@ -25,7 +25,7 @@
 		/*
 		 * A list of user types that have permission to execute this endpoint
 		 */
-		/** @Collection(type=@WadapiObject(class='Role')) */
+		/** @Collection(type=@WadapiObject(class='Wadapi\Authentication\Role')) */
 		protected $roles;
 
 		/*

@@ -3,7 +3,7 @@
 
 	use Wadapi\Http\ResponseHandler;
 	use Wadapi\Persistence\SQLGateway;
-	
+
 	class AccessResource extends AccessController{
 		public function execute(){
 			$profileClass = $this->getTokenProfileClass();
@@ -11,14 +11,14 @@
 		}
 
 		protected function get(){
-			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"),false);
+			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"),false);
 			$payload = $this->assemblePayload($token);
 			$eTag = md5($token->getETag());
 			ResponseHandler::retrieved($payload,$token->getURI(),$token->getModified(),$eTag);
 		}
 
 		protected function put(){
-			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
+			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
 
 			$role = $this->getFromContent("role");
 			$token->setRole($role);
@@ -32,7 +32,7 @@
 		}
 
 		protected function isConsistent($modifiedDate,$eTag){
-			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
+			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
 			return $modifiedDate == $token->getModified() && $eTag == md5($token->getETag());
 		}
 

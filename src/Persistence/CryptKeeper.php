@@ -12,7 +12,7 @@
 		 * Remove an object from the database and mark it as removed
 		 */
 		public static function bury($object){
-			if(!is_object($object) || !Mirror::reflectClass($object)->descendsFrom("PersistentClass")){
+			if(!is_object($object) || !Mirror::reflectClass($object)->descendsFrom("Wadapi\Persistence\PersistentClass")){
 				Logger::fatal_error(MessageUtility::DATA_MODIFY_ERROR,"Only PersistentClass objects may be buried.");
 			}
 

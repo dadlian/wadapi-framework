@@ -48,7 +48,7 @@
 				return;
 			}
 
-			@$newConnection = new mysqli($this->getHostname(), $this->getUsername(), $this->getPassword(), $this->getDatabase());
+			@$newConnection = new \mysqli($this->getHostname(), $this->getUsername(), $this->getPassword(), $this->getDatabase());
 
 			if($newConnection->connect_error){
 				Logger::fatal_error(MessageUtility::DATABASE_CONNECT_ERROR, $newConnection->connect_error.".");

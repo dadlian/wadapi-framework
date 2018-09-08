@@ -23,7 +23,7 @@
 		/** @Boolean(default=false) */
 		protected $disabled;
 
-		/** @WadapiObject(class='TokenProfile') */
+		/** @WadapiObject(class='Wadapi\Authentication\TokenProfile') */
 		protected $profile;
 
 		protected function refresh($lifetime=0){
