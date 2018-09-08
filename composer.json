@@ -12,7 +12,7 @@
     "type": "library",
     "require": {
   		"php": ">=7.1",
-      "dadlian/addendum": "~1.0"
+      "dadlian/addendum": "^1.0"
     },
     "require-dev": {
 	    "phpunit/phpunit": "6.*"
