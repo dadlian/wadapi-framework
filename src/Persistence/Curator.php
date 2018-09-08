@@ -1,6 +1,13 @@
 <?php
 	namespace Wadapi\Persistence;
 
+	include_once 'Grave.php';
+	include_once 'Warrant.php';
+	include_once dirname(__FILE__)."/../Http/Resource.php";
+	include_once dirname(__FILE__)."/../Http/SlugResource.php";
+	include_once dirname(__FILE__)."/../Authentication/APIToken.php";
+	include_once dirname(__FILE__)."/../Authentication/TokenProfile.php";
+
 	use Wadapi\System\Worker;
 	use Wadapi\System\SettingsManager;
 	use Wadapi\Reflection\Mirror;
@@ -43,7 +50,7 @@
 		private static function manageTableForClass($class){
 			if(!in_array($class->getName(), self::$classesSeen)){
 				self::$classesSeen[] = $class->getName();
-				if(DatabaseAdministrator::tableExists($class->getName())){
+				if(DatabaseAdministrator::tableExists($class->getShortName())){
 					//Add any new class fields, or change field types for existing table
 					self::alterTableForClass($class);
 				}else{
@@ -60,7 +67,7 @@
 
 			if(!in_array($class->getName().StringUtility::capitalise($property->getName()), self::$classesSeen)){
 				self::$classesSeen[] = $class->getName().StringUtility::capitalise($property->getName());
-				if(DatabaseAdministrator::tableExists($class->getName().StringUtility::capitalise($property->getName()))){
+				if(DatabaseAdministrator::tableExists($class->getShortName().StringUtility::capitalise($property->getName()))){
 					self::alterTableForList($property);
 				}else{
 					self::createTableForList($property);
@@ -112,8 +119,8 @@
 
 			//If class is not hierarchy root, add foreign key to parent object
 			if($class->getParentClass()->getName() != "Wadapi\Persistence\PersistentClass"){
-				$parentClassName = $class->getParentClass()->getName();
-				$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getName()), 0, 25)."_id";
+				$parentClassName = $class->getParentClass()->getShortName();
+				$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getShortName()), 0, 25)."_id";
 				$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (id)
 							REFERENCES $parentClassName (id) ON DELETE CASCADE ON UPDATE CASCADE,";
 			}
@@ -122,8 +129,9 @@
 			foreach($classProperties as $property){
 				if($property->getAnnotation()->isObject()){
 					$propertyName = $property->getName();
-					$objectTable = $property->getAnnotation()->getObjectClass();
-					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getName()),0,25).substr("_$propertyName",0,20);
+					preg_match("/\\\\(\w+)$/",$property->getAnnotation()->getObjectClass(),$objectClassMatch);
+					$objectTable = $objectClassMatch[1];
+					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getShortName()),0,25).substr("_$propertyName",0,20);
 					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)
 								ON DELETE SET NULL ON UPDATE CASCADE,";
 				}
@@ -147,7 +155,7 @@
 		 */
 		private static function createTableForList($property){
 			$propertyName = $property->getName();
-			$className = $property->getDeclaringClass()->getName();
+			$className = $property->getDeclaringClass()->getShortName();
 			$annotation = $property->getAnnotation();
 			$listAnnotations = array();
 
@@ -177,7 +185,7 @@
 
 					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($tableName),0,25)."_value";
 					$createStatement .= ",value VARCHAR(20),CONSTRAINT $constraintName ".
-								"FOREIGN KEY (value) REFERENCES {$objectClass->getName()} (id) ".
+								"FOREIGN KEY (value) REFERENCES {$objectClass->getShortName()} (id) ".
 								"ON UPDATE CASCADE ON DELETE CASCADE,";
 				}else if(!$nextAnnotation->isCollection()){
 					$columnType = self::getColumnType($nextAnnotation);

@@ -252,11 +252,11 @@
 			$requestURI = self::extractRequestURI();
 			switch($requestURI){
 				case "wadapi/setup":
-					self::$endpoint = new Endpoint("Wadapi Setup",$requestURI,"WadapiSetup",array(),array(),array(),array(),array(),array());
+					self::$endpoint = new Endpoint("Wadapi Setup",$requestURI,"Wadapi\System\WadapiSetup",array(),array(),array(),array(),array(),array());
 					self::$isUtility = true;
 					break;
 				case "wadapi/rebuild":
-					self::$endpoint = new Endpoint("Wadapi Database Rebuilder",$requestURI,"WadapiRebuildDatabase",array(),array(),array(),array(),array(),array());
+					self::$endpoint = new Endpoint("Wadapi Database Rebuilder",$requestURI,"Wadapi\System\WadapiRebuildDatabase",array(),array(),array(),array(),array(),array());
 					self::$isUtility = true;
 					break;
 				default:

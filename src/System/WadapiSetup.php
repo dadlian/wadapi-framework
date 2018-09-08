@@ -1,6 +1,7 @@
 <?php
 	namespace Wadapi\System;
 
+	use Wadapi\Persistence\DatabaseAdministrator;
 	use Wadapi\Persistence\SQLGateway;
 	use Wadapi\Persistence\Searcher;
 	use Wadapi\Persistence\Criterion;
@@ -39,6 +40,10 @@
 		}
 
 		protected function post(){
+			if(DatabaseAdministrator::tableExists("APIToken")){
+				ResponseHandler::conflict("This Wadapi Instance has already been successfully configured.");
+			}
+
       $sqlGateway = new SQLGateway();
       $searcher = new Searcher();
 
