@@ -13,8 +13,8 @@
 			$this->endpoints = array_key_exists("endpoints",$userEndpoints)?$userEndpoints['endpoints']:array();
 
 			//Add System Endpoints
-			$authenticatorWrite = new Role(["write"]);
-			$authenticatorReadWrite = new Role(["read","write"]);
+			$authenticatorWrite = ["write"];
+			$authenticatorReadWrite = ["read","write"];
 
 			$this->endpoints[] = [
 	      "name"=>"Access Collection",
@@ -65,11 +65,16 @@
 				}
 
 				if($isMatch){
+					$roles = array();
+					foreach($endpoint['roles'] as $role => $permissions){
+						$roles[$role] = new Role($permissions);
+					}
+
 					$matchingEndpoints[] = new Endpoint(
 						$endpoint['name'],
 						$endpoint['path'],
 						$endpoint['controller'],
-						$endpoint['roles'],
+						$roles,
 						$endpoint['parameters'],
 						$endpoint['requirements']
 					);

@@ -129,7 +129,7 @@
 			foreach($classProperties as $property){
 				if($property->getAnnotation()->isObject()){
 					$propertyName = $property->getName();
-					preg_match("/\\\\(\w+)$/",$property->getAnnotation()->getObjectClass(),$objectClassMatch);
+					preg_match("/(?:\\\\)?(\w+)$/",$property->getAnnotation()->getObjectClass(),$objectClassMatch);
 					$objectTable = $objectClassMatch[1];
 					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getShortName()),0,25).substr("_$propertyName",0,20);
 					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)

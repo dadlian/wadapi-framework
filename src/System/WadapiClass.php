@@ -240,7 +240,7 @@
 				}
 
 				$errors[] = MessageUtility::DATA_MODIFY_ERROR;
-				$debugs[] = "Invalid argument '$newValue' supplied for $class::$calledMethod(). $expectedType expected.";
+				$debugs[] = "Invalid argument '".(is_array($newValue)?"[".implode(",",$newValue)."]":$newValue)."' supplied for $class::$calledMethod(). $expectedType expected.";
 			}
 
 			//Check whether the specified value is a valid enumerated value for the property, if applicable.
