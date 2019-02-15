@@ -105,7 +105,7 @@
 									FILTER_VALIDATE_URL) ||
 				   $this->isEmail() && !filter_var($annotation->default,FILTER_VALIDATE_EMAIL) ||
 				   $this->isPhone() && !preg_match("/\+?[0-9\s\-\)\(]+/",$annotation->default) ||
-				   $this->isFile() && !file_exists(self::$path.$annotation->default) ||
+				   $this->isFile() && !file_exists(self::$path."/".$annotation->default) ||
 				   $this->isInteger() && !is_int($annotation->default) ||
 				   $this->isBoolean() && !is_bool($annotation->default) ||
 				   ($this->isFloat() || $this->isMonetary()) && !is_numeric($annotation->default)){
@@ -131,7 +131,7 @@
 					   $this->isUrl() && !filter_var((preg_match("/^https?:\/\//",$value)?"":"//").$value,FILTER_VALIDATE_URL) ||
 					   $this->isEmail() && !filter_var($value,FILTER_VALIDATE_EMAIL) ||
 					   $this->isPhone() && !preg_match("/\+?[0-9\s\-\)\(]+/",$value) ||
-					   $this->isFile() && !file_exists(self::$path.$value) ||
+					   $this->isFile() && !file_exists(self::$path."/".$value) ||
 					   $this->isInteger() && !is_int($value) ||
 					   $this->isBoolean() && !is_bool($value) ||
 					   ($this->isFloat() || $this->isMonetary()) && !is_numeric($value)){

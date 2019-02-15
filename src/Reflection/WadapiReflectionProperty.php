@@ -114,7 +114,7 @@
 				|| ($annotation->isUrl() && $value && !filter_var((preg_match("/^http:\/\//",$value)?"":"http://").$value,FILTER_VALIDATE_URL))
 				|| ($annotation->isEmail() && $value && !filter_var($value,FILTER_VALIDATE_EMAIL))
 				|| ($annotation->isPhone() && $value && !preg_match("/^\+?[0-9\(\)\-\s]+$/",$value))
-				|| ($annotation->isFile() && $value && !file_exists(self::$path."$value"))
+				|| ($annotation->isFile() && $value && !file_exists(self::$path."/$value"))
 				|| ($annotation->isInteger() && !is_int($value))
 				|| (($annotation->isFloat() || $annotation->isMonetary()) && !is_numeric($value))
 				|| ($annotation->isBoolean() && !is_bool($value))

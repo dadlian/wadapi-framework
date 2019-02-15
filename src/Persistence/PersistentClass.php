@@ -96,7 +96,7 @@
 			$reflectedClass = Mirror::reflectClass($currentClass);
 			if($reflectedClass->isAbstract() && $reflectedClass->getDescendants()){
 				$currentClass = $reflectedClass->getDescendants()[0]->getName();
-			}else{
+			}else if($reflectedClass->isAbstract()){
 				return null;
 			}
 
