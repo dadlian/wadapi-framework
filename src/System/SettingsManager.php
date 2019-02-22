@@ -8,6 +8,9 @@
 		private static $settingsGateway;
 
 		public static function getSetting($category,$name){
+			$category = preg_replace("/\-/","",$category);
+			$name = preg_replace("/\-/","",$name);
+
 			$category = StringUtility::decapitalise($category);
 			$name = StringUtility::capitalise(StringUtility::camelise($name));
 
@@ -31,7 +34,7 @@
 				$settingCategory = self::$settingsGateway->findUnique($category);
 				if($settingCategory){
 					$getter = "get$name";
-					self::$settings[$category][$name] = $settingCategory->$getter();
+					self::$settings[$category][$name] = json_decode($settingCategory->$getter(),true);
 				}
 			}
 

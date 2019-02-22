@@ -3,11 +3,25 @@
 
 	use Wadapi\Http\ResponseHandler;
 	use Wadapi\Persistence\SQLGateway;
+	use Wadapi\Persistence\Searcher;
+	use Wadapi\Persistence\Criterion;
 
 	class AccessCollection extends AccessController{
 		public function post(){
-			$profileClass = $this->getTokenProfileClass();
-			$profile = $profileClass?new $profileClass():null;
+			$invalidatedToken = $this->getFromContent("invalidated-token");
+			$sqlGateway = new SQLGateway();
+
+			if($invalidatedToken){
+				$searcher = new Searcher();
+
+				preg_match($this->getRegexBase()."\/access\/([0-9]{14})$/",$invalidatedToken,$matches);
+				$searcher->addCriterion("id",Criterion::EQUAL,$matches[1]);
+				$profile = $sqlGateway->findUnique("Wadapi\Authentication\APIToken",$searcher)->getProfile();
+			}else{
+				$profileClass = $this->getTokenProfileClass();
+				$reflectedProfileClass = new \ReflectionClass($profileClass);
+				$profile = ($profileClass && !$reflectedProfileClass->isAbstract())?new $profileClass():null;
+			}
 
 			//Create Access Token
 			$token = new APIToken($this->getFromContent("role"));
@@ -18,7 +32,6 @@
 				ResponseHandler::bad("The following values are missing or invalid: ".implode(", ",$invalidArguments).".");
 			}
 
-			$sqlGateway = new SQLGateway();
 			$sqlGateway->save($token);
 
 			$lifetime = $token->getExpires()?($token->getExpires()-$token->getModified()):0;

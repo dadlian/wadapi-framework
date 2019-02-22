@@ -11,9 +11,24 @@
 			$activeEnvironment = array_key_exists($this->settings['environment'],$environments)?
 															$environments[$this->settings['environment']]:array_shift($environments);
 
+			$processedSettings = array();
 			foreach($activeEnvironment as $setting => $values){
 				$this->settings[$setting] = $values;
 			}
+
+			foreach($this->settings as $setting =>$values){
+				$setting = preg_replace("/\-/","",$setting);
+				if(is_array($values)){
+					foreach($values as $name => $value){
+						$name = preg_replace("/\-/","",$name);
+						$processedSettings[$setting][$name] = json_encode($value);
+					}
+				}else{
+					$processedSettings[$setting] = json_encode($values);
+				}
+			}
+
+			$this->settings = $processedSettings;
 		}
 
 		public function find($name,$unique=false){

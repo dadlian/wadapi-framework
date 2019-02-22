@@ -1,8 +1,10 @@
 <?php
 	namespace Wadapi\Authentication;
 
+	use Wadapi\Http\RequestHandler;
 	use Wadapi\Http\ResponseHandler;
 	use Wadapi\Persistence\SQLGateway;
+	use Wadapi\Persistence\CryptKeeper;
 
 	class AccessResource extends AccessController{
 		public function execute(){
@@ -29,6 +31,13 @@
 			$payload = $this->assemblePayload($token);
 			$eTag = md5($token->getETag());
 			ResponseHandler::modified($payload,$token->getURI());
+		}
+
+		protected function delete(){
+			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
+
+			CryptKeeper::bury($token);
+			ResponseHandler::deleted("Client access: /".RequestHandler::getRequestURI().", has been revoked.");
 		}
 
 		protected function isConsistent($modifiedDate,$eTag){
