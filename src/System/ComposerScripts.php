@@ -19,7 +19,7 @@
       self::generateUtilityKey($event);
     }
 
-    private static function configureEnvironment($environment, Event $event){
+    protected static function configureEnvironment($environment, Event $event){
       $environmentFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../environments.json";
       $environments = json_decode(file_get_contents($environmentFile),true);
 
@@ -70,18 +70,18 @@
         "level"=>$logLevel?$logLevel:"debug"
       ];
 
-      file_put_contents($environmentFile,json_encode($environments,JSON_PRETTY_PRINT));
+      file_put_contents($environmentFile,json_encode($environments,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
       echo "Successfully Configured $environment environment\n";
     }
 
-    private static function generateUtilityKey(Event $event){
+    protected static function generateUtilityKey(Event $event){
       $settingsFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../settings.json";
       $settings = json_decode(file_get_contents($settingsFile),true);
 
       $utilityKey = md5(microtime(true) * rand() * rand());
       $settings["api"]["utilitykey"] = $utilityKey;
 
-      file_put_contents($settingsFile,json_encode($settings,JSON_PRETTY_PRINT));
+      file_put_contents($settingsFile,json_encode($settings,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
       echo "Successfully Generated Utility Key: [$utilityKey]\n";
     }
   }
