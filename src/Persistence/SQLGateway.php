@@ -572,6 +572,9 @@
 				}else if(!$saveObject->isPersisted()){
 					DatabaseAdministrator::execute("INSERT INTO {$class->getShortName()}(id,created,modified) VALUES(?,?,?)",
 										$saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified());
+				//Update modification time for classes without properties that have already been persisted
+				}else if($saveObject->isDirty()){
+					DatabaseAdministrator::execute("UPDATE {$class->getShortName()} SET modified = ? WHERE id = ?",$saveObject->getModified(),$saveObject->getId());
 				}
 
 				//Save the object's collection properties

@@ -46,6 +46,7 @@
 					"lifetime"=>$lifetime
 				),
 				"role"=>$this->getFromContent("role"),
+				"enabled"=>!$token->isDisabled(),
 				"profile"=>$profile?$profile->deliverPayload():""
 			);
 

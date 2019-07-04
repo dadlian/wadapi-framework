@@ -51,6 +51,7 @@
 				"tokens"=>"{$token->getURI()}/tokens",
 				"active-token"=>"{$token->getURI()}/tokens/active",
 				"role"=>$token->getRole(),
+				"enabled"=>!$token->isDisabled(),
 				"profile"=>$token->getProfile()?$token->getProfile()->deliverPayload():""
 			);
 
