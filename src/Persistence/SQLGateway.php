@@ -15,7 +15,11 @@
 		//A map of queued insert queries and their arguments for delayed execution
 		private $insertQueries;
 
-		public function find($className, $searcher=null, $sorter=null, $records=0, $start=0,$lazyLoad=true){
+		public function count($className, $searcher=null){
+			return $this->find($className,$searcher,null,0,0,true,true);
+		}
+
+		public function find($className, $searcher=null, $sorter=null, $records=0, $start=0,$lazyLoad=true,$countResults=false){
 			$objects = array();
 
 			//Verify that $className is a string
@@ -29,7 +33,7 @@
 			if(!class_exists($className)){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway can only search for PersistentClass objects. ". $className.
 									" is not Persistent.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			//Verify that the argument $className is a PersistentClass
@@ -37,13 +41,13 @@
 			if(!$reflectedClass->descendsFrom('Wadapi\Persistence\PersistentClass')){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway can only search for PersistentClass objects. ". $className.
 									" is not Persistent.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			//Verify that the reflect class is not abstract
 			if($reflectedClass->isAbstract()){
 				Logger::warning(MessageUtility::UNEXPECTED_ARGUMENT_WARNING, "SQLGateway cannot search for abstract PersistentClasses. $className is abstract.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			//Initialise an empty searcher if none was specified
@@ -60,7 +64,7 @@
 				}
 
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Searcher class object argument as a searcher, $type given.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			//Initialise an empty sorter if none was specified
@@ -77,23 +81,23 @@
 				}
 
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects a Sorter class object argument as a sorter, $type given.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			if(!is_int($records)){
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer limit values, ".gettype($records)." given.");
-				return $objects;
+				return $countResults?0:$objects;
 			}else if($records < 0){
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find limit values must be greater than or equal to 0.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			if(!is_int($start)){
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find expects integer start values, ".gettype($start)." given.");
-				return $objects;
+				return $countResults?0:$objects;
 			}else if($start < 0){
 				Logger::fatal_error(MessageUtility::UNEXPECTED_ARGUMENT_WARNING,"SQLGateway find start values must be greater than or equal to 0.");
-				return $objects;
+				return $countResults?0:$objects;
 			}
 
 			$class = Mirror::reflectClass($className);
@@ -129,10 +133,9 @@
 
 					if(sizeof($cachedObjects) == sizeof($values)){
 						if($records){
-							return array_slice($cachedObjects,$start*$records,$records);
+							return $countResults?sizeof($cachedObjects):array_slice($cachedObjects,$start*$records,$records);
 						}else{
-							return $cachedObjects;
-
+							return $countResults?sizeof($cachedObjects):$cachedObjects;
 						}
 					}
 
@@ -341,7 +344,9 @@
 				}
 			}
 
-			$query = "SELECT * FROM $fromTable ".($where?preg_replace("/\s(id|created|modified)\s/"," a.$1 ","WHERE ".implode(" AND ",$where)):"")." $order $limit";
+			$projection = ($countResults)?"COUNT(a.id) AS results":"*";
+			$query = "SELECT $projection FROM $fromTable ".($where?preg_replace("/\s(id|created|modified)\s/"," a.$1 ","WHERE ".implode(" AND ",$where)):"")." $order $limit";
+
 			//Replace placeholders with hard coded nulls, if necessary
 			if(in_array(null,$whereArguments)){
 				$positions = array();
@@ -364,6 +369,11 @@
 
 			$results = call_user_func_array(array('Wadapi\Persistence\DatabaseAdministrator','execute'),array_merge(array($query),$whereArguments));
 			$data = array();
+
+			//If this is a count query return the count and don't load objects into memory
+			if($countResults){
+				return $results[0]["results"];
+			}
 
 			foreach($results as $result){
 				$data[$result['id']] = $result;

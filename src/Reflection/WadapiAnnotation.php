@@ -5,5 +5,7 @@
 
 	abstract class WadapiAnnotation extends Annotation{
 		public $required;
+		public $unique;
+		public $hidden;
 	}
 ?>

@@ -39,21 +39,8 @@
 			return array("key"=>$accessKey,"secret"=>$accessSecret,"refresh"=>$refreshSecret);
 		}
 
-		protected function getURI(){
-			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url")."/access/{$this->getId()}";
-		}
-
-		protected function getURITemplate(){
-			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url")."/access/{access_id}";
-		}
-
-		protected function getETag(){
-			$eTag = $this->getRole();
-			$eTag .= $this->getExpires();
-			$eTag .= $this->getAccessKey();
-			$eTag .= $this->getAccessSecret();
-			$eTag .= $this->getRefreshSecret();
-			return md5($this->getModified().$eTag);
+		public static function getURITemplate(){
+			return "/access/{id}";
 		}
 	}
 ?>

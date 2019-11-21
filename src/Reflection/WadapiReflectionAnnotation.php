@@ -23,6 +23,12 @@
 		//Stores whether the annotation is required or not
 		private $required;
 
+		//Stores whether the annotated property's value needs to be unique or not
+		private $unique;
+
+		//Stores whether the annotated property's value should be externally accessible
+		private $hidden;
+
 		//Annotation's default value (if applicable)
 		private $default;
 
@@ -40,6 +46,9 @@
 
 		//The annotation min value
 		private $min;
+
+		//The annotation pattern to match (for strings)
+		private $pattern;
 
 		//The annotation height (for images)
 		private $height;
@@ -93,6 +102,28 @@
 					$this->required = $annotation->required;
 				}else{
 					echo "An annotation's 'required' value is not a boolean, as required.\n";
+					return;
+				}
+			}
+
+			//Initialise annotation unique property
+			$this->unique = false;
+			if($annotation->unique){
+				if(is_bool($annotation->unique)){
+					$this->unique = $annotation->unique;
+				}else{
+					echo "An annotation's 'unique' value is not a boolean, as required.\n";
+					return;
+				}
+			}
+
+			//Initialise annotation hidden property
+			$this->hidden = false;
+			if($annotation->hidden){
+				if(is_bool($annotation->hidden)){
+					$this->hidden = $annotation->hidden;
+				}else{
+					echo "An annotation's 'hidden' value is not a boolean, as required.\n";
 					return;
 				}
 			}
@@ -165,6 +196,17 @@
 				$this->min = $annotation->min;
 			}
 
+			//Initialise annotation pattern property
+			$this->pattern = null;
+			if($this->isString() && $annotation->pattern){
+				if(!is_string($annotation->pattern)){
+					echo "An annotation's pattern value must be a string, ".gettype($annotation->pattern)." given.\n";
+					return;
+				}
+
+				$this->pattern = $annotation->pattern;
+			}
+
 			//Initialise annotation width and height properties
 			$this->height = null;
 			if($this->isImage() && $annotation->height){
@@ -199,8 +241,28 @@
 			return $this->required;
 		}
 
+		public function isUnique(){
+			return $this->unique;
+		}
+
+		public function isHidden(){
+			return $this->hidden;
+		}
+
 		public function getDefault(){
-			return $this->default;
+			if($this->default){
+				return $this->default;
+			}else if($this->isCollection()){
+				return [];
+			}else if($this->isObject()){
+				return null;
+			}else if($this->isBoolean()){
+				return false;
+			}else if($this->isNumeric()){
+				return 0;
+			}else{
+				return "";
+			}
 		}
 
 		public function getObjectClass(){
@@ -221,6 +283,14 @@
 
 		public function getMin(){
 			return $this->min;
+		}
+
+		public function getPattern(){
+			if($this->pattern){
+				return $this->pattern;
+			}else{
+				return ".*";
+			}
 		}
 
 		public function getHeight(){

@@ -4,7 +4,6 @@
 	include_once 'Grave.php';
 	include_once 'Warrant.php';
 	include_once dirname(__FILE__)."/../Http/Resource.php";
-	include_once dirname(__FILE__)."/../Http/SlugResource.php";
 	include_once dirname(__FILE__)."/../Authentication/APIToken.php";
 	include_once dirname(__FILE__)."/../Authentication/TokenProfile.php";
 

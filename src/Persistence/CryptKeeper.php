@@ -26,18 +26,21 @@
 		/*
 		 * See whether an object has previously existed and been deleted
 		 */
-		 public static function exhume($objectId,$resource){
+		 public static function exhume($objectId,$resource = ""){
 			$sqlGateway = new SQLGateway();
 			$searcher = new Searcher();
 			$searcher->addCriterion("objectId",Criterion::EQUAL,$objectId);
-			$searcher->addCriterion("objectClass",Criterion::EQUAL,$resource);
+			if($resource){
+				$searcher->addCriterion("objectClass",Criterion::EQUAL,$resource);
+			}
+
 			$corpse = $sqlGateway->find("Grave",$searcher);
 
 			if($corpse){
-				ResponseHandler::gone("The requested resource no longer exists.");
+				return true;
+			}else{
+				return false;
 			}
-
-			return false;
 		 }
 	}
 ?>

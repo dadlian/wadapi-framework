@@ -10,35 +10,6 @@
 	use Wadapi\Http\ResponseHandler;
 
 	class WadapiSetup extends UtilityController{
-		protected function isInvalid(){
-			$invalidArguments = array();
-			return $invalidArguments;
-		}
-
-		protected function getInvalidQueryParameters(){
-			$invalidQueryParameters = array();
-			return $invalidQueryParameters;
-		}
-
-		protected function isConsistent($modifiedDate,$eTag){
-			return true;
-		}
-
-		protected function assemblePayload($tokens){
-			$payload = array(
-				"root"=>[
-          "key"=>$tokens['root-key'],
-          "secret"=>$tokens['root-secret']
-        ],
-        "authenticator"=>[
-          "key"=>$tokens['authenticator-key'],
-          "secret"=>$tokens['authenticator-secret']
-        ]
-			);
-
-			return $payload;
-		}
-
 		protected function post(){
 			if(DatabaseAdministrator::tableExists("APIToken")){
 				ResponseHandler::conflict("This Wadapi Instance has already been successfully configured.");
@@ -67,14 +38,18 @@
 				$sqlGateway->save(new APIToken("authenticator",0,md5($authenticatorKey),md5($authenticatorSecret),md5($authenticatorKey.$authenticatorSecret)));
 			}
 
-      $tokens = [
-        "root-key"=>$rootKey,
-        "root-secret"=>$rootSecret,
-        "authenticator-key"=>$authenticatorKey,
-        "authenticator-secret"=>$authenticatorSecret
-      ];
+			$payload = array(
+				"root"=>[
+          "key"=>$rootKey,
+          "secret"=>$rootSecret
+        ],
+        "authenticator"=>[
+          "key"=>$authenticatorKey,
+          "secret"=>$authenticatorSecret
+        ]
+			);
 
-			ResponseHandler::created($this->assemblePayload($tokens),$this->getBase()."/wadapi/setup");
+			ResponseHandler::created($payload,"/wadapi/setup");
 		}
 	}
 ?>

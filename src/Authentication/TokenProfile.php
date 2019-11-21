@@ -12,9 +12,5 @@
 
       return $invalidArguments;
     }
-
-    abstract public function getInvalidArguments($arguments,$token);
-    abstract public function build($arguments,$token);
-    abstract public function deliverPayload();
   }
 ?>

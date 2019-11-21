@@ -35,12 +35,6 @@
 		protected $parameters;
 
 		/*
-		 * A list of the required arguments to this endpoint
-		 */
-		/** @Collection(type=@WadapiString) */
-		protected $requirements;
-
-		/*
 		 * A list of MIME types which this endpoint can respond with (overides the global settings)
 		 */
 		/** @Collection(type=@WadapiString) */

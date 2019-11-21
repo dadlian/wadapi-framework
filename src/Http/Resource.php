@@ -2,15 +2,161 @@
 	namespace Wadapi\Http;
 
 	use Wadapi\Persistence\PersistentClass;
+	use Wadapi\Persistence\SQLGateway;
+	use Wadapi\Persistence\Searcher;
+	use Wadapi\Persistence\Criterion;
+	use Wadapi\Reflection\Mirror;
 	use Wadapi\System\SettingsManager;
+	use Wadapi\Utility\StringUtility;
 
 	abstract class Resource extends PersistentClass{
-		abstract protected function getURI();
-		abstract protected function getURITemplate();
-		abstract protected function getETag();
+		private $_buildErrors;
 
-		protected function getBaseUri(){
-			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url");
+		abstract public static function getURITemplate();
+
+		public function __construct(){
+			$arguments = func_get_args();
+			call_user_func_array(array('parent','__construct'), $arguments);
+
+			$this->_buildErrors = [
+				"required"=>array(),
+				"invalid"=>array(),
+				"conflicting"=>array()
+			];
+		}
+
+		protected function build($data){
+			foreach(Mirror::reflectClass($this)->getProperties(false) as $property){
+				$propertyName = $property->getName();
+      	$value = array_key_exists($propertyName,$data)?$data[$propertyName]:$property->getAnnotation()->getDefault();
+				$setter = "set".StringUtility::capitalise($propertyName);
+
+				//Load potential conflicting resource for uniqueness search
+				$sqlGateway = new SQLGateway();
+				$searcher = new Searcher();
+				$searcher->addCriterion($propertyName,Criterion::EQUAL,$value);
+				$conflictingResource = $sqlGateway->findUnique(get_class($this),$searcher);
+
+	      if($property->getAnnotation()->isRequired() && !array_key_exists($propertyName,$data)){
+					$this->_buildErrors["required"][] = $propertyName;
+				}else if(!$property->isValidValue($value)){
+					$this->_buildErrors["invalid"][] = $propertyName;
+	      }else if($property->getAnnotation()->isUnique() && $conflictingResource && $conflictingResource->getId() !== $this->getId()){
+					$this->_buildErrors["conflicting"][] = $propertyName;
+				}else{
+	        $this->$setter($value);
+	      }
+			}
+		}
+
+		protected function deliverPayload(){
+			$payload = [
+				"self"=>$this->getURI()
+			];
+
+			foreach(Mirror::reflectClass($this)->getProperties(false) as $property){
+				if($property->getAnnotation()->isHidden()){
+					continue;
+				}
+
+				$propertyName = $property->getName();
+				$getter = "get".StringUtility::capitalise($property->getName());
+
+				if($property->getAnnotation()->isObject()){
+					$payload[$propertyName] = $this->$getter()->deliverPayload();
+				}else if($property->getAnnotation()->isCollection()){
+					$payload[$propertyName] = $this->_deliverCollectionPayload($property->getAnnotation()->getContainedType(),$this->$getter());
+				}else{
+					$payload[$propertyName] = $this->$getter();
+				}
+			}
+
+			return $payload;
+		}
+
+		protected function hasBuildErrors(){
+			return !empty($this->_buildErrors['required']) || !empty($this->_buildErrors['invalid']) || !empty($this->_buildErrors['conflicting']);
+		}
+
+		protected function getMissingArguments(){
+			return $this->_buildErrors['required'];
+		}
+
+		protected function getInvalidArguments(){
+			return $this->_buildErrors['invalid'];
+		}
+
+		protected function getConflictingArguments(){
+			return $this->_buildErrors['conflicting'];
+		}
+
+		protected function getETag(){
+			$eTag = "";
+			foreach(Mirror::reflectClass($this)->getProperties(false) as $property){
+				if($property->getAnnotation()->isHidden()){
+					continue;
+				}
+				
+				$getter = "get".StringUtility::capitalise($property->getName());
+
+				if($property->getAnnotation()->isObject()){
+					$eTag .= $this->$getter()->getETag();
+				}else if($property->getAnnotation()->isCollection()){
+					$eTag .= $this->_getCollectionETag($property->getAnnotation()->getContainedType(),$this->$getter);
+				}else{
+					$eTag .= $this->$getter();
+				}
+			}
+
+			return md5($this->getModified().$eTag);
+		}
+
+		private function _deliverCollectionPayload($containedType,$collection){
+			$payload = [];
+
+			foreach($collection as $key => $element){
+				if($containedType->isCollection()){
+					$eTag .= $this->_deliverCollectionPayload($containedType->getContainedType(),$element);
+				}else if($containedType->isObject()){
+					$payload[] = $element->deliverPayload();
+				}else{
+					$payload[] = $element;
+				}
+			}
+
+			return $payload;
+		}
+
+		private function _getCollectionETag($containedType,$collection){
+			$eTag = "";
+			foreach($collection as $key => $element){
+				if($containedType->isCollection()){
+					$eTag .= $this->_getCollectionETag($containedType->getContainedType(),$element);
+				}else if($containedType->isObject()){
+					$eTag .= $element->getETag();
+				}else{
+					$eTag .= $element;
+				}
+			}
+
+			return $eTag;
+		}
+
+		protected function getUri(){
+			$protocol = (array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https":"http";
+			$url = SettingsManager::getSetting("install","url");
+			$uriTemplate = $this->getURITemplate();
+
+			$tokens = array();
+			preg_match("/({\w+})/",$uriTemplate,$tokens);
+
+			foreach(array_slice($tokens,1) as $token){
+				$getter = "get".StringUtility::capitalise(preg_replace("/[{}]/","",$token));
+				$value = $this->$getter();
+				$uriTemplate = preg_replace("/$token/",$value,$uriTemplate);
+			}
+
+			return "$protocol://$url$uriTemplate";
 		}
 	}
 ?>

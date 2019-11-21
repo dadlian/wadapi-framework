@@ -16,7 +16,17 @@
         }
       }
 
-      self::generateUtilityKey($event);
+      //Configure Authentication Method
+      $authType = "";
+      while(!in_array(strtolower($authType),["none","basic"])){
+        $authType = readline("Please select the authentication type for your API [none/basic]? \n");
+      }
+      self::_writeSetting($event,"auth",$authType);
+
+      //Generate Utlity Key
+      $utilityKey = md5(microtime(true) * rand() * rand());
+      self::_writeSetting($event,"utilitykey",$utilityKey);
+      echo "Successfully Generated Utility Key: [$utilityKey]\n";
     }
 
     protected static function configureEnvironment($environment, Event $event){
@@ -74,15 +84,11 @@
       echo "Successfully Configured $environment environment\n";
     }
 
-    protected static function generateUtilityKey(Event $event){
+    private static function _writeSetting($event,$setting,$value){
       $settingsFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../settings.json";
       $settings = json_decode(file_get_contents($settingsFile),true);
-
-      $utilityKey = md5(microtime(true) * rand() * rand());
-      $settings["api"]["utilitykey"] = $utilityKey;
-
+      $settings["api"][$setting] = $value;
       file_put_contents($settingsFile,json_encode($settings,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-      echo "Successfully Generated Utility Key: [$utilityKey]\n";
     }
   }
 ?>

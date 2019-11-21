@@ -1,113 +1,144 @@
 <?php
 	namespace Wadapi\Http;
 
-	use Wadapi\System\Controller;
 	use Wadapi\System\SettingsManager;
 	use Wadapi\Reflection\Mirror;
+	use Wadapi\Persistence\DatabaseAdministrator;
 	use Wadapi\Persistence\SQLGateway;
 	use Wadapi\Persistence\Searcher;
 	use Wadapi\Persistence\Sorter;
 	use Wadapi\Persistence\Criterion;
 	use Wadapi\Persistence\CryptKeeper;
 
-	abstract class ResourceController extends Controller{
-		public function execute(){
-			$method = strtolower(RequestHandler::getMethod());
-
-			if(!Mirror::reflectClass($this)->hasMethod($method)){
-				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the ".RequestHandler::getMethod()." method.");
-			}else{
-				if(in_array($method,array("post","put"))){
-					//Check for missing and invalid arguments
-					$this->ensureRequirements();
-					$this->validateArguments();
-				}
-
-				if(in_array($method,array("put","delete")) && $this->mustPrevalidate()){
-					if(RequestHandler::checksConsistency()){
-						//Check for consistency preconditions
-						$consistencyTags = RequestHandler::getConsistencyTags();
-						if(!$this->isConsistent($consistencyTags["ifUnmodifiedSince"],$consistencyTags["ifMatch"])){
-							ResponseHandler::precondition("The wrong Modification Date and ETag values were given for this resource.");
-						}
-					}else{
-						ResponseHandler::forbidden("If-Unmodified-Since and If-Match Headers must be specified to modify this resource.");
-					}
-				}
-
-				$this->$method();
-			}
+	abstract class ResourceController extends RestController{
+		protected function get(){
+			$resource = $this->_retrieveResource();
+			ResponseHandler::retrieved($resource->deliverPayload(),$resource->getURI(),$resource->getModified(),$resource->getETag());
 		}
 
-		protected function getBase(){
-			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url");
-		}
+		protected function put(){
+			$bodyArguments = RequestHandler::getContent()?RequestHandler::getContent():array();
 
-		protected function getRegexBase(){
-			return "/^https?:\/\/".preg_replace("/\//","\/",preg_quote(SettingsManager::getSetting("install","url")));
-		}
+			//Load Resource
+			$resource = $this->_retrieveResource();
 
-		protected function getFromContent($argument,$default=""){
-			$arguments = $this->getRequestArguments();
-			return array_key_exists($argument,$arguments)?$arguments[$argument]:$default;
-		}
+			//Check for Resource Consistency
+			$this->_checkConsistency($resource);
 
-		protected function getRequestArguments(){
-			return is_array(RequestHandler::getContent())?RequestHandler::getContent():array(RequestHandler::getContent());
-		}
-
-		private function ensureRequirements(){
-			$missingArguments = array();
-			foreach(RequestHandler::getEndpoint()->getRequirements() as $field){
-				if(!array_key_exists($field,is_array(RequestHandler::getContent())?RequestHandler::getContent():array(RequestHandler::getContent()))){
-					$missingArguments[] = $field;
-				}
+			//Ensure PUT is supported
+			$resource = $this->modifyResource($resource, $bodyArguments);
+			if(!$resource){
+				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the PUT method.");
 			}
 
+			//Check for any missing arguments
+			$missingArguments = $resource->getMissingArguments();
 			if($missingArguments){
 				ResponseHandler::bad("The following arguments are required, but have not been supplied: ".implode(", ",$missingArguments).".");
 			}
-		}
 
-		protected function validateArguments(){
-			if($invalidArguments = $this->isInvalid()){
+			//Check for any missing arguments
+			$invalidArguments = $resource->getInvalidArguments();
+			if($invalidArguments){
 				ResponseHandler::bad("The following arguments have invalid values: ".implode(", ",$invalidArguments).".");
 			}
-		}
 
-		protected function getResourceObject($resourceClass,$resourceKeyField,$resourceKeyValue,$lazyLoad=true){
-			$sqlGateway = new SQLGateway();
-			$searcher = new Searcher();
-			$searcher->addCriterion($resourceKeyField,Criterion::EQUAL,$resourceKeyValue);
-			$resource = $sqlGateway->findUnique($resourceClass,$searcher,new Sorter(),0,0,$lazyLoad);
-
-			if(!$resource && !CryptKeeper::exhume($resourceKeyValue,$resourceClass)){
-				ResponseHandler::missing("There is presently no resource with the given URI.");
+			//Check for any conflicting arguments
+			$conflictingArguments = $resource->getConflictingArguments();
+			if($conflictingArguments){
+				ResponseHandler::conflict("The following arguments conflict with those of another ".strtolower(get_class($resource)).": ".implode(", ",$conflictingArguments).".");
 			}
 
-			return $resource;
+			//Return modified resource
+			ResponseHandler::modified($resource->deliverPayload(),$resource->getURI(),$resource->getModified(),$resource->getETag());
 		}
 
-		protected function mustPrevalidate(){
-			return true;
+		protected function delete(){
+			//Load Resource
+			$resource = $this->_retrieveResource();
+
+			//Check for Resource Consistency
+			$this->_checkConsistency($resource);
+
+			//Ensure DELETE method is supported
+			$resource = $this->deleteResource($resource);
+			if(!$resource){
+				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the DELETE method.");
+			}
+
+			//Check if the resource has been removed and bury it if so
+			$present = DatabaseAdministrator::execute("SELECT COUNT(id) as present FROM ".get_class($resource)." WHERE id = '{$resource->getId()}'")[0]['present'];
+			if(!$present){
+				CryptKeeper::bury($resource);
+			}
+
+			//Return deleted resource message
+			ResponseHandler::deleted(get_class($resource).": {$resource->getURI()}, has been deleted.");
 		}
 
-		protected function options(){
-			$payload = array("options"=>array());
-			foreach(Mirror::reflectClass($this)->getMethods() as $method){
-				$methodName = $method->getName();
-				if(in_array($methodName,array("get","post","put","delete","options"))){
-					$payload["options"][] = strtoupper($methodName);
+		private function _retrieveResource(){
+			//Find resource class that matches URL pattern (if any)
+			$resourceClass = Mirror::reflectClass("Wadapi\Http\Resource");
+			$requestUri = "/".RequestHandler::getRequestURI();
+			$targetClass = "";
+
+			foreach($resourceClass->getDescendants() as $resourceDescendant){
+				$uriTemplate = call_user_func_array(array($resourceDescendant->getName(),'getURITemplate'),[]);
+				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{\w+}/",".*",$uriTemplate));
+
+				if(preg_match("/^$uriPattern$/",$requestUri)){
+					$targetClass = $resourceDescendant->getName();
+					break;
 				}
 			}
 
-			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url")."/".RequestHandler::getRequestURI();
-			ResponseHandler::retrieved($payload,$uri);
+			if(!$targetClass){
+				ResponseHandler::missing("There is presently no resource with the given URI.");
+			}
 
+			//Load resource into memory
+			$sqlGateway = new SQLGateway();
+			$searcher = new Searcher();
+
+			$tokens = array();
+			$templateParts = preg_split("/\//",$uriTemplate);
+			$uriParts = preg_split("/\//",$requestUri);
+			$resourceIdentifier = "";
+
+			for($i=0; $i < sizeof($templateParts); $i++){
+				if(preg_match("/{\w+}/",$templateParts[$i])){
+					$resourceIdentifier = $uriParts[$i];
+					$searcher->addCriterion(preg_replace("/[{}]/","",$templateParts[$i]),Criterion::EQUAL,$resourceIdentifier);
+				}
+			}
+
+			$resource = $sqlGateway->findUnique($targetClass,$searcher);
+
+			if(!$resource && CryptKeeper::exhume($resourceIdentifier)){
+				ResponseHandler::gone("The requested resource no longer exists.");
+			}else if(!$resource){
+				ResponseHandler::missing("There is presently no resource with the given URI.");
+			}else{
+				//Call user retrieval hook
+				$this->retrieveResource($resource);
+
+				return $resource;
+			}
 		}
 
-		protected abstract function isInvalid();
-		protected abstract function isConsistent($modified,$eTag);
-		protected abstract function assemblePayload($object);
+		private function _checkConsistency($resource){
+			if(RequestHandler::checksConsistency()){
+				$consistencyTags = RequestHandler::getConsistencyTags();
+				if($resource->getModified() !== $consistencyTags["ifUnmodifiedSince"] || $resource->getETag() !== $consistencyTags["ifMatch"]){
+					ResponseHandler::precondition("The wrong Modification Date and ETag values were given for this resource.");
+				}
+			}else{
+				ResponseHandler::forbidden("If-Unmodified-Since and If-Match Headers must be specified to modify this resource.");
+			}
+		}
+
+		abstract protected function retrieveResource($uri);
+		abstract protected function modifyResource($resource, $data);
+		abstract protected function deleteResource($resource);
 	}
 ?>

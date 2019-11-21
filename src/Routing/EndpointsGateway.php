@@ -21,8 +21,7 @@
 	      "path"=>"access",
 	      "controller"=>"Wadapi\Authentication\AccessCollection",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
-	      "parameters"=>[],
-	      "requirements"=>["role"]
+	      "parameters"=>[]
 			];
 
 			$this->endpoints[] = [
@@ -30,8 +29,7 @@
 	      "path"=>"access/@",
 	      "controller"=>"Wadapi\Authentication\AccessResource",
 	      "roles"=>["authenticator"=>$authenticatorReadWrite],
-	      "parameters"=>["access"],
-	      "requirements"=>["role"]
+	      "parameters"=>["access"]
 			];
 
 			$this->endpoints[] = [
@@ -39,8 +37,7 @@
 	      "path"=>"access/@/tokens",
 	      "controller"=>"Wadapi\Authentication\TokenCollection",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
-	      "parameters"=>["access"],
-	      "requirements"=>[]
+	      "parameters"=>["access"]
 			];
 
 			$this->endpoints[] = [
@@ -48,8 +45,7 @@
 	      "path"=>"access/@/tokens/active",
 	      "controller"=>"Wadapi\Authentication\TokenResource",
 	      "roles"=>["authenticator"=>$authenticatorWrite],
-	      "parameters"=>["access"],
-	      "requirements"=>[]
+	      "parameters"=>["access"]
 			];
 		}
 
@@ -75,8 +71,7 @@
 						$endpoint['path'],
 						$endpoint['controller'],
 						$roles,
-						$endpoint['parameters'],
-						$endpoint['requirements']
+						$endpoint['parameters']
 					);
 
 					if($unique){

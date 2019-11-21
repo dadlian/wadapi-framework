@@ -46,7 +46,7 @@
 			if(sizeof($validValues) == 0){
 				return true;
 			}else{
-				return in_array($value, $validValues, true);
+				return !$value || in_array($value, $validValues, true);
 			}
 		}
 
@@ -110,7 +110,7 @@
 			if(($annotation->isCollection() && !is_null($value) && !$this->isValidCollection($value, $annotation->getContainedType()))
 				|| ($annotation->isObject() && !is_null($value) && (!is_object($value)
 						|| strtolower(get_class($value)) != strtolower($annotation->getObjectClass())))
-				|| ($annotation->isString() && !is_string($value))
+				|| ($annotation->isString() && (!is_string($value) || ($value && !preg_match("/^{$annotation->getPattern()}$/m",$value))))
 				|| ($annotation->isUrl() && $value && !filter_var((preg_match("/^http:\/\//",$value)?"":"http://").$value,FILTER_VALIDATE_URL))
 				|| ($annotation->isEmail() && $value && !filter_var($value,FILTER_VALIDATE_EMAIL))
 				|| ($annotation->isPhone() && $value && !preg_match("/^\+?[0-9\(\)\-\s]+$/",$value))
