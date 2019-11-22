@@ -4,6 +4,7 @@
 	class Settings extends WadapiClass{
 		const INSTALL = "install";
 		const DATABASE = "database";
+		const MESSAGING = "messaging";
 		const LOGGING = "logging";
 		const API = "api";
 

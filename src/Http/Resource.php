@@ -96,7 +96,7 @@
 				if($property->getAnnotation()->isHidden()){
 					continue;
 				}
-				
+
 				$getter = "get".StringUtility::capitalise($property->getName());
 
 				if($property->getAnnotation()->isObject()){
