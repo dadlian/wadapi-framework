@@ -63,10 +63,16 @@
 				$payload[$customField] = $customValue;
 			}
 
+			//Ensure GET is supported
+			$collection = $this->retrieveResources(($page-1)*$records,$records);
+			if(!$collection){
+				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the GET method.");
+			}
+
 			//Assemble Entries
 			$entries = array();
-			foreach($this->retrieveResources(($page-1)*$records,$records) as $entry){
-				$entries[] = $entry->deliverPayload();
+			foreach($collection as $resource){
+				$entries[] = $resource->deliverPayload();
 			}
 
 			$payload['entries'] = $entries;
@@ -78,7 +84,8 @@
 			$bodyArguments = RequestHandler::getContent()?RequestHandler::getContent():array();
 
 			//Ensure POST is supported
-			$resource = $this->createResource($bodyArguments);
+			$owner = $this->_retrieveResource(true);
+			$resource = $this->createResource($bodyArguments, $owner);
 			if(!$resource){
 				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the POST method.");
 			}
@@ -112,6 +119,6 @@
 		abstract protected function getInvalidQueryParameters();
 		abstract protected function countResources();
 		abstract protected function retrieveResources($start,$count);
-		abstract protected function createResource($data);
+		abstract protected function createResource($data, $owner);
 	}
 ?>

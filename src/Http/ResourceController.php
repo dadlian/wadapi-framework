@@ -13,6 +13,10 @@
 	abstract class ResourceController extends RestController{
 		protected function get(){
 			$resource = $this->_retrieveResource();
+
+			//Call user retrieval hook
+			$this->retrieveResource($resource);
+			
 			ResponseHandler::retrieved($resource->deliverPayload(),$resource->getURI(),$resource->getModified(),$resource->getETag());
 		}
 
@@ -74,56 +78,6 @@
 
 			//Return deleted resource message
 			ResponseHandler::deleted(get_class($resource).": {$resource->getURI()}, has been deleted.");
-		}
-
-		private function _retrieveResource(){
-			//Find resource class that matches URL pattern (if any)
-			$resourceClass = Mirror::reflectClass("Wadapi\Http\Resource");
-			$requestUri = "/".RequestHandler::getRequestURI();
-			$targetClass = "";
-
-			foreach($resourceClass->getDescendants() as $resourceDescendant){
-				$uriTemplate = call_user_func_array(array($resourceDescendant->getName(),'getURITemplate'),[]);
-				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{\w+}/",".*",$uriTemplate));
-
-				if(preg_match("/^$uriPattern$/",$requestUri)){
-					$targetClass = $resourceDescendant->getName();
-					break;
-				}
-			}
-
-			if(!$targetClass){
-				ResponseHandler::missing("There is presently no resource with the given URI.");
-			}
-
-			//Load resource into memory
-			$sqlGateway = new SQLGateway();
-			$searcher = new Searcher();
-
-			$tokens = array();
-			$templateParts = preg_split("/\//",$uriTemplate);
-			$uriParts = preg_split("/\//",$requestUri);
-			$resourceIdentifier = "";
-
-			for($i=0; $i < sizeof($templateParts); $i++){
-				if(preg_match("/{\w+}/",$templateParts[$i])){
-					$resourceIdentifier = $uriParts[$i];
-					$searcher->addCriterion(preg_replace("/[{}]/","",$templateParts[$i]),Criterion::EQUAL,$resourceIdentifier);
-				}
-			}
-
-			$resource = $sqlGateway->findUnique($targetClass,$searcher);
-
-			if(!$resource && CryptKeeper::exhume($resourceIdentifier)){
-				ResponseHandler::gone("The requested resource no longer exists.");
-			}else if(!$resource){
-				ResponseHandler::missing("There is presently no resource with the given URI.");
-			}else{
-				//Call user retrieval hook
-				$this->retrieveResource($resource);
-
-				return $resource;
-			}
 		}
 
 		private function _checkConsistency($resource){
