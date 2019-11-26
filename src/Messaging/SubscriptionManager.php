@@ -27,6 +27,10 @@
         Messenger::subscribe($entity,$action,array(new $controllerName(),"subscribe"));
       }
 
+      if(!$subscriptions){
+        Messenger::subscribe("default","default",array(new NullController(),"subscribe"));
+      }
+
       Messenger::listen();
     }
   }

@@ -63,8 +63,9 @@
     }
 
     public static function listen(){
-			while(self::$_activeChannel->is_consuming()){
-				self::$_activeChannel->wait();
+			$channel = self::getChannel();
+			while($channel->is_consuming()){
+				$channel->wait();
 			}
     }
 
