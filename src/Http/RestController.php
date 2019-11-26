@@ -81,5 +81,9 @@
 
 			return $resource;
 		}
+
+		protected function getCustomPayloadFields(){
+			return array();
+		}
   }
 ?>

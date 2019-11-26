@@ -16,8 +16,13 @@
 
 			//Call user retrieval hook
 			$this->retrieveResource($resource);
-			
-			ResponseHandler::retrieved($resource->deliverPayload(),$resource->getURI(),$resource->getModified(),$resource->getETag());
+
+			$payload = $resource->deliverPayload();
+			foreach($this->getCustomPayloadFields() as $customField => $customValue){
+				$payload[$customField] = $customValue;
+			}
+
+			ResponseHandler::retrieved($payload,$resource->getURI(),$resource->getModified(),$resource->getETag());
 		}
 
 		protected function put(){

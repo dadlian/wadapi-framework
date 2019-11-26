@@ -10,7 +10,7 @@
 			$records = RequestHandler::getQueryParameter("records")?RequestHandler::getQueryParameter("records"):$maxPageLength;
 
 			//Verify validity of page and records values
-			$invalidArguments = $this->getInvalidQueryParameters();
+			$invalidArguments = $this->getInvalidQueryParameters(RequestHandler::getQueryParameters());
 
 			if(!(string)(int)$page == $page || intval($page) < 1){
 				$invalidArguments[] = "page";
@@ -27,7 +27,7 @@
 				$records = intval($records);
 			}
 
-			$count = $this->countResources();
+			$count = $this->countResources(RequestHandler::getQueryParameters());
 
 			//Verify page exists
 			if($count && RequestHandler::getQueryParameter("page") && ($page-1)*$records >= $count){
@@ -64,8 +64,8 @@
 			}
 
 			//Ensure GET is supported
-			$collection = $this->retrieveResources(($page-1)*$records,$records);
-			if(!$collection){
+			$collection = $this->retrieveResources(($page-1)*$records,$records,RequestHandler::getQueryParameters());
+			if(is_null($collection)){
 				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the GET method.");
 			}
 
@@ -108,17 +108,18 @@
 				ResponseHandler::conflict("The following arguments conflict with those of another ".strtolower(get_class($resource)).": ".implode(", ",$conflictingArguments).".");
 			}
 
+			$payload = $resource->deliverPayload();
+			foreach($this->getCustomPayloadFields() as $customField => $customValue){
+				$payload[$customField] = $customValue;
+			}
+
 			//Return created resource
-      ResponseHandler::created($resource->deliverPayload(),$resource->getURI());
+      ResponseHandler::created($payload,$resource->getURI());
 		}
 
-		protected function getCustomPayloadFields(){
-			return array();
-		}
-
-		abstract protected function getInvalidQueryParameters();
-		abstract protected function countResources();
-		abstract protected function retrieveResources($start,$count);
+		abstract protected function getInvalidQueryParameters($parameters);
+		abstract protected function countResources($parameters);
+		abstract protected function retrieveResources($start,$count,$parameters);
 		abstract protected function createResource($data, $owner);
 	}
 ?>
