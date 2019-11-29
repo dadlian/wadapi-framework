@@ -8,6 +8,7 @@
 			$maxPageLength = 25;
 			$page = RequestHandler::getQueryParameter("page")?RequestHandler::getQueryParameter("page"):1;
 			$records = RequestHandler::getQueryParameter("records")?RequestHandler::getQueryParameter("records"):$maxPageLength;
+			$owner = $this->_retrieveResource(true);
 
 			//Verify validity of page and records values
 			$invalidArguments = $this->getInvalidQueryParameters(RequestHandler::getQueryParameters());
@@ -27,7 +28,7 @@
 				$records = intval($records);
 			}
 
-			$count = $this->countResources(RequestHandler::getQueryParameters());
+			$count = $this->countResources(RequestHandler::getQueryParameters(),$owner);
 
 			//Verify page exists
 			if($count && RequestHandler::getQueryParameter("page") && ($page-1)*$records >= $count){
@@ -64,7 +65,7 @@
 			}
 
 			//Ensure GET is supported
-			$collection = $this->retrieveResources(($page-1)*$records,$records,RequestHandler::getQueryParameters());
+			$collection = $this->retrieveResources(($page-1)*$records,$records,RequestHandler::getQueryParameters(),$owner);
 			if(is_null($collection)){
 				ResponseHandler::unsupported("/".RequestHandler::getRequestURI()." does not support the GET method.");
 			}
@@ -118,8 +119,8 @@
 		}
 
 		abstract protected function getInvalidQueryParameters($parameters);
-		abstract protected function countResources($parameters);
-		abstract protected function retrieveResources($start,$count,$parameters);
+		abstract protected function countResources($parameters, $owner);
+		abstract protected function retrieveResources($start,$count,$parameters, $owner);
 		abstract protected function createResource($data, $owner);
 	}
 ?>

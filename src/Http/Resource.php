@@ -71,6 +71,10 @@
 				}
 			}
 
+			foreach($this->getCustomFields() as $customField => $value){
+				$payload[$customField] = $value;
+			}
+
 			return $payload;
 		}
 
@@ -88,6 +92,10 @@
 
 		protected function getConflictingArguments(){
 			return $this->_buildErrors['conflicting'];
+		}
+
+		protected function getCustomFields(){
+			return array();
 		}
 
 		protected function getETag(){
@@ -143,8 +151,6 @@
 		}
 
 		protected function getUri(){
-			$protocol = (array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https":"http";
-			$url = SettingsManager::getSetting("install","url");
 			$uriTemplate = $this->getURITemplate();
 
 			$tokens = array();
@@ -156,7 +162,7 @@
 				$uriTemplate = preg_replace("/$token/",$value,$uriTemplate);
 			}
 
-			return "$protocol://$url$uriTemplate";
+			return $uriTemplate;
 		}
 	}
 ?>
