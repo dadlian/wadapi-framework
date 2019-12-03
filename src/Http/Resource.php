@@ -63,7 +63,7 @@
 				$getter = "get".StringUtility::capitalise($property->getName());
 
 				if($property->getAnnotation()->isObject()){
-					$payload[$propertyName] = $this->$getter()->deliverPayload();
+					$payload[$propertyName] = $this->$getter()?$this->$getter()->deliverPayload():[];
 				}else if($property->getAnnotation()->isCollection()){
 					$payload[$propertyName] = $this->_deliverCollectionPayload($property->getAnnotation()->getContainedType(),$this->$getter());
 				}else{
