@@ -71,7 +71,7 @@
 					}
 				}
 
-				$resource = $sqlGateway->findUnique($targetClass,$searcher);
+				$resource = $sqlGateway->findUnique($targetClass,$searcher, null, 0, 0, false);
 				if(!$resource && CryptKeeper::exhume($resourceIdentifier)){
 					ResponseHandler::gone("The requested resource no longer exists.");
 				}else if(!$resource){

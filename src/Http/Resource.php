@@ -63,7 +63,7 @@
 				$getter = "get".StringUtility::capitalise($property->getName());
 
 				if($property->getAnnotation()->isObject()){
-					$payload[$propertyName] = $this->$getter()->deliverPayload();
+					$payload[$propertyName] = $this->$getter()?$this->$getter()->deliverPayload():[];
 				}else if($property->getAnnotation()->isCollection()){
 					$payload[$propertyName] = $this->_deliverCollectionPayload($property->getAnnotation()->getContainedType(),$this->$getter());
 				}else{
@@ -108,9 +108,9 @@
 				$getter = "get".StringUtility::capitalise($property->getName());
 
 				if($property->getAnnotation()->isObject()){
-					$eTag .= $this->$getter()->getETag();
+					$eTag .= $this->$getter()?$this->$getter()->getETag():"";
 				}else if($property->getAnnotation()->isCollection()){
-					$eTag .= $this->_getCollectionETag($property->getAnnotation()->getContainedType(),$this->$getter);
+					$eTag .= $this->_getCollectionETag($property->getAnnotation()->getContainedType(),$this->$getter());
 				}else{
 					$eTag .= $this->$getter();
 				}
