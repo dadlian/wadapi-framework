@@ -95,7 +95,6 @@
 				$belowMax = false;
 			}
 
-
 			return $aboveMin && $belowMax;
 		}
 

@@ -177,7 +177,7 @@
 
 			//Initialise annotation min and max properties
 			$this-> max = null;
-			if($this->isRanged() && $annotation->max){
+			if($this->isRanged() && ($annotation->max || is_numeric($annotation->max))){
 				if(!is_numeric($annotation->max)){
 					echo "An annotation's max value must be numeric, ".gettype($annotation->max)." given.\n";
 					return;
@@ -187,7 +187,7 @@
 			}
 
 			$this-> min = null;
-			if($this->isRanged() && $annotation->min){
+			if($this->isRanged() && ($annotation->min || is_numeric($annotation->min))){
 				if(!is_numeric($annotation->min)){
 					echo "An annotation's min value must be numeric, ".gettype($annotation->min)." given.\n";
 					return;

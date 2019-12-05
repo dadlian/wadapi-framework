@@ -37,7 +37,7 @@
 				$searcher->addCriterion($propertyName,Criterion::EQUAL,$value);
 				$conflictingResource = $sqlGateway->findUnique(get_class($this),$searcher);
 
-	      if($property->getAnnotation()->isRequired() && (!array_key_exists($propertyName,$data) || !$data[$propertyName])){
+	      if($property->getAnnotation()->isRequired() && (!array_key_exists($propertyName,$data) || (!$data[$propertyName] && !is_numeric($data[$propertyName])))){
 					$this->_buildErrors["required"][] = $propertyName;
 				}else if(!$property->isValidValue($value)){
 					$this->_buildErrors["invalid"][] = $propertyName;
@@ -151,18 +151,29 @@
 		}
 
 		protected function getUri(){
-			$uriTemplate = $this->getURITemplate();
-
+			$sqlGateway = new SQLGateway();
+			$searcher = new Searcher();
 			$tokens = array();
-			preg_match("/({\w+})/",$uriTemplate,$tokens);
+			$uri = $this->getURITemplate();
 
+			preg_match("/({\w+:\w+})/",$uri,$directives);
+			foreach(array_slice($directives,1) as $directive){
+				$directiveParts = preg_split("/:/",preg_replace("/[{}]/","",$directive));
+				$searcher->addCriterion($directiveParts[1],Criterion::INCLUDES,$this);
+				$parent = $sqlGateway->findUnique($directiveParts[0],$searcher);
+				if($parent){
+					$uri = preg_replace("/$directive/",$parent->getId(),$uri);
+				}
+			}
+
+			preg_match("/({\w+})/",$uri,$tokens);
 			foreach(array_slice($tokens,1) as $token){
 				$getter = "get".StringUtility::capitalise(preg_replace("/[{}]/","",$token));
 				$value = $this->$getter();
-				$uriTemplate = preg_replace("/$token/",$value,$uriTemplate);
+				$uri = preg_replace("/$token/",$value,$uri);
 			}
 
-			return $uriTemplate;
+			return $uri;
 		}
 	}
 ?>

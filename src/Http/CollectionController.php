@@ -46,15 +46,14 @@
 				}
 			}
 
-			$baseUri = SettingsManager::getSetting("install","url");
 			//Get page URIs
-			$payload['self'] = "$baseUri/".RequestHandler::getRequestURI()."?page=$page".(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
+			$payload['self'] = RequestHandler::getRequestURI()."?page=$page".(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
 			if($page > 1){
-				$payload['prev'] = "$baseUri/".RequestHandler::getRequestURI()."?page=".($page-1).(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
+				$payload['prev'] = RequestHandler::getRequestURI()."?page=".($page-1).(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
 			}
 
 			if($page < ceil($count/$records)){
-				$payload['next'] = "$baseUri/".RequestHandler::getRequestURI()."?page=".($page+1).(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
+				$payload['next'] = RequestHandler::getRequestURI()."?page=".($page+1).(($records==$maxPageLength)?"":"&records=$records").$additionalQueryParameters;
 			}
 
 			//Get total record count
