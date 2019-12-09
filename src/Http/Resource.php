@@ -156,13 +156,15 @@
 			$tokens = array();
 			$uri = $this->getURITemplate();
 
-			preg_match("/({\w+:\w+})/",$uri,$directives);
-			foreach(array_slice($directives,1) as $directive){
+			preg_match_all("/{\w+:\w+}/",$uri,$directives);
+			foreach($directives[0] as $directive){
 				$directiveParts = preg_split("/:/",preg_replace("/[{}]/","",$directive));
+				$searcher->clearCriteria();
 				$searcher->addCriterion($directiveParts[1],Criterion::INCLUDES,$this);
 				$parent = $sqlGateway->findUnique($directiveParts[0],$searcher);
 				if($parent){
-					$uri = preg_replace("/$directive/",$parent->getId(),$uri);
+					$uri = $parent->getURI().preg_split("/$directive/",$uri)[1];
+					break;
 				}
 			}
 

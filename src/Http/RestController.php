@@ -39,14 +39,14 @@
 			$resourceClass = Mirror::reflectClass("Wadapi\Http\Resource");
 			$requestUri = "/".RequestHandler::getRequestURI();
 			$targetClass = "";
+			$matchScore = 0;
 
 			foreach($resourceClass->getDescendants() as $resourceDescendant){
 				$uriTemplate = call_user_func_array(array($resourceDescendant->getName(),'getURITemplate'),[]);
-				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{\w+}/",".*",$uriTemplate));
+				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{[\w:]+}/",".*",$uriTemplate));
 
-				if($uriTemplate && preg_match("/^$uriPattern".($descendant?"":"$")."/",$requestUri)){
+				if($uriTemplate && preg_match("/^$uriPattern".($descendant?"":"$")."/",$requestUri) && strlen($uriPattern) > $matchScore){
 					$targetClass = $resourceDescendant->getName();
-					break;
 				}
 			}
 
@@ -60,7 +60,7 @@
 				$searcher = new Searcher();
 
 				$tokens = array();
-				$templateParts = preg_split("/\//",$uriTemplate);
+				$templateParts = preg_split("/\//",$targetClass::getURITemplate());
 				$uriParts = preg_split("/\//",$requestUri);
 				$resourceIdentifier = "";
 
