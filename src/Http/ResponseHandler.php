@@ -41,8 +41,13 @@
 		}
 
 		/*------------------------------- SUCCESS FUNCTIONs -------------------------------*/
-		protected static function created($payload,$location){
+		protected static function created($payload,$location,$lastModified="",$eTag=""){
 			self::$response->setContentURI($location,$location);
+
+			if($lastModified){
+				self::$response->setState($lastModified,$eTag);
+			}
+			
 			self::sendSuccess(201,$payload);
 		}
 
