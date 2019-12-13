@@ -46,6 +46,7 @@
 				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{[\w:]+}/",".*",$uriTemplate));
 
 				if($uriTemplate && preg_match("/^$uriPattern".($descendant?"":"$")."/",$requestUri) && strlen($uriPattern) > $matchScore){
+					$matchScore = strlen($uriPattern);
 					$targetClass = $resourceDescendant->getName();
 				}
 			}
