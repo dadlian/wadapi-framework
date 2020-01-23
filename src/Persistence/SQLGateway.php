@@ -355,7 +355,7 @@
 					$positions[] = $pos;
 				}
 				$filteredWhereArguments = array();
-				for($i=0; $i<sizeof($whereArguments); $i++){
+				for($i=sizeof($whereArguments)-1; $i>=0; $i--){
 					$whereArgument = $whereArguments[$i];
 					if(is_null($whereArgument)){
 						$query = substr_replace($query,"null",$positions[$i],1);
@@ -364,7 +364,7 @@
 					}
 				}
 
-				$whereArguments = $filteredWhereArguments;
+				$whereArguments = array_reverse($filteredWhereArguments);
 			}
 
 			$results = call_user_func_array(array('Wadapi\Persistence\DatabaseAdministrator','execute'),array_merge(array($query),$whereArguments));
