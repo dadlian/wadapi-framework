@@ -32,10 +32,12 @@
 				$setter = "set".StringUtility::capitalise($propertyName);
 
 				//Load potential conflicting resource for uniqueness search
-				$sqlGateway = new SQLGateway();
-				$searcher = new Searcher();
-				$searcher->addCriterion($propertyName,Criterion::EQUAL,$value);
-				$conflictingResource = $sqlGateway->findUnique(get_class($this),$searcher);
+		    if($property->getAnnotation()->isUnique()){
+					$sqlGateway = new SQLGateway();
+					$searcher = new Searcher();
+					$searcher->addCriterion($propertyName,Criterion::EQUAL,$value);
+					$conflictingResource = $sqlGateway->findUnique(get_class($this),$searcher);
+				}
 
 	      if($property->getAnnotation()->isRequired() && (!array_key_exists($propertyName,$data) || (!$data[$propertyName] && !is_numeric($data[$propertyName])))){
 					$this->_buildErrors["required"][] = $propertyName;
