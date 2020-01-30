@@ -726,7 +726,7 @@
 
 				//Skip Unspecified Required Values
 				$propertyValue = $object->$getterName();
-				$requiredNotSpecified = !$propertyValue && !$property->getAnnotation()->isBoolean() && $property->getAnnotation()->isRequired();
+				$requiredNotSpecified = is_null($propertyValue) && $property->getAnnotation()->isRequired();
 				if($requiredNotSpecified){
 					continue;
 				}
