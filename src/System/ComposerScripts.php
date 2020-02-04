@@ -85,7 +85,7 @@
     }
 
     private static function _writeSetting($event,$setting,$value){
-      $settingsFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../settings.json";
+      $settingsFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../src/settings.json";
       $settings = json_decode(file_get_contents($settingsFile),true);
       $settings["api"][$setting] = $value;
       file_put_contents($settingsFile,json_encode($settings,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
