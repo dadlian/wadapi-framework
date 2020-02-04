@@ -30,7 +30,7 @@
     }
 
     protected static function configureEnvironment($environment, Event $event){
-      $environmentFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../environments.json";
+      $environmentFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../src/environments.json";
       $environments = json_decode(file_get_contents($environmentFile),true);
 
       if(!array_key_exists($environment,$environments)){
