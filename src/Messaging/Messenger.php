@@ -88,19 +88,30 @@
 		 */
 		private static function getChannel(){
 			if(!self::$_activeChannel){
-        $hostname = SettingsManager::getSetting("messaging","hostname");
-        $port = SettingsManager::getSetting("messaging","port");
-        $username = SettingsManager::getSetting("messaging","username");
-        $password = SettingsManager::getSetting("messaging","password");
-
-        self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);
-        self::$_activeChannel = self::$_activeConnection->channel();
+				self::tryConnection(1);
 				list(self::$_activeQueue, ,) = self::$_activeChannel->queue_declare("",false,false,true,false);
 
 				self::$_callbacks = array();
 			}
 
 			return self::$_activeChannel;
+		}
+
+		private static tryConnection($attempt){
+			if(!self::$_activeChannel){
+				$hostname = SettingsManager::getSetting("messaging","hostname");
+				$port = SettingsManager::getSetting("messaging","port");
+				$username = SettingsManager::getSetting("messaging","username");
+				$password = SettingsManager::getSetting("messaging","password");
+
+				try{
+					self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);
+					self::$_activeChannel = self::$_activeConnection->channel();
+				}catch(Exception $e){
+					sleep(5*$attempt);
+					self::tryConnection($attempt+1);
+				}
+			}
 		}
   }
 ?>

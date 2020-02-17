@@ -12,6 +12,7 @@
 			$registeredConnections = Registrar::getRegistered('Wadapi\Persistence\DatabaseConnection');
 			foreach($registeredConnections as $connection){
 				$connection->commit();
+				$connection->close();
       }
     }
 
