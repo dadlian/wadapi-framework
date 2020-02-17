@@ -97,7 +97,7 @@
 			return self::$_activeChannel;
 		}
 
-		private static tryConnection($attempt){
+		private static function tryConnection($attempt){
 			if(!self::$_activeChannel){
 				$hostname = SettingsManager::getSetting("messaging","hostname");
 				$port = SettingsManager::getSetting("messaging","port");
