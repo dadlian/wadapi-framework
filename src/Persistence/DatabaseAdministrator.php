@@ -131,11 +131,11 @@
 		 * Tells the administrator to use the system wide DB connection if none has been specified
 		 */
 		private static function checkConnection(){
-			if(!self::$activeConnection){
+			if(!self::$activeConnection || self::$activeConnection->isClosed()){
 				self::connect();
 			}
 
-			return !self::$activeConnection->isClosed();
+			return self::$activeConnection;
 		}
 
 		/*
