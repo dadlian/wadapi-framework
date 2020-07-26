@@ -1,61 +1,30 @@
 <?php
 	namespace Wadapi\Authentication;
 
-	use Wadapi\Http\RequestHandler;
-	use Wadapi\Http\ResponseHandler;
+	use Wadapi\Http\ResourceController;
 	use Wadapi\Persistence\SQLGateway;
-	use Wadapi\Persistence\CryptKeeper;
 
-	class AccessResource extends AccessController{
-		public function execute(){
-			$profileClass = $this->getTokenProfileClass();
-			parent::execute();
+	class AccessResource extends ResourceController{
+		protected function retrieveResource($token){
+			return $token;
 		}
 
-		protected function get(){
-			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"),false);
-			$payload = $this->assemblePayload($token);
-			$eTag = md5($token->getETag());
-			ResponseHandler::retrieved($payload,$token->getURI(),$token->getModified(),$eTag);
+		protected function modifyResource($token, $data){
+			$token->build($data);
+			if(!$token->hasBuildErrors()){
+				$sqlGateway = new SQLGateway();
+				$sqlGateway->save($token);
+			}
+
+			return $token;
 		}
 
-		protected function put(){
-			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
-
-			$role = $this->getFromContent("role");
-			$token->setRole($role);
-
+		protected function deleteResource($token){
 			$sqlGateway = new SQLGateway();
-			$sqlGateway->save($token);
+			$sqlGateway->delete($token);
+			$sqlGateway->delete($token->getProfile());
 
-			$payload = $this->assemblePayload($token);
-			$eTag = md5($token->getETag());
-			ResponseHandler::modified($payload,$token->getURI());
-		}
-
-		protected function delete(){
-			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
-
-			CryptKeeper::bury($token);
-			ResponseHandler::deleted("Client access: /".RequestHandler::getRequestURI().", has been revoked.");
-		}
-
-		protected function isConsistent($modifiedDate,$eTag){
-			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
-			return $modifiedDate == $token->getModified() && $eTag == md5($token->getETag());
-		}
-
-		protected function assemblePayload($token){
-			$payload = array(
-				"self"=>$token->getURI(),
-				"tokens"=>"{$token->getURI()}/tokens",
-				"active-token"=>"{$token->getURI()}/tokens/active",
-				"role"=>$token->getRole(),
-				"enabled"=>!$token->isDisabled(),
-				"profile"=>$token->getProfile()?$token->getProfile()->deliverPayload():""
-			);
-
-			return $payload;
+			return $token;
 		}
 	}
 ?>

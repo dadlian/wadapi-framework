@@ -72,7 +72,11 @@
 			$tablePrefix = self::getTablePrefix();
 
 			if(!self::$knownTables){
-				$results = self::execute("SHOW TABLES");
+				if(!self::checkConnection()){
+					return;
+				}
+
+				$results = self::$activeConnection->listTables();
 				foreach($results as $result){
 					self::$knownTables[] = array_shift($result);
 				}
@@ -80,6 +84,24 @@
 
 			$prefix = self::getTablePrefix();
 			return in_array("$prefix$tableName", self::$knownTables);
+		}
+
+		/*
+		 * Returns the columns of the given table if it exists
+		 */
+		public static function describe($tableName){
+			if(self::checkConnection()){
+				return self::$activeConnection->describe(self::getTablePrefix()."$tableName");
+			}
+		}
+
+		/*
+		 * Says whether a table allows cascading keys or not
+		 */
+		public static function isSQLServer(){
+			if(self::checkConnection()){
+				return self::$activeConnection->getDriver() == "sqlsrv";
+			}
 		}
 
 		/*
@@ -110,17 +132,18 @@
 
 		//Builds a connection using the configured connection parameters
 		protected static function connect(){
-			self::buildConnection(SettingsManager::getSetting('database','hostname'),SettingsManager::getSetting('database','username'),
-						SettingsManager::getSetting('database','password'),SettingsManager::getSetting('database','database'));
+			self::buildConnection(SettingsManager::getSetting('database','driver'),SettingsManager::getSetting('database','hostname'),
+														SettingsManager::getSetting('database','username'),SettingsManager::getSetting('database','password'),
+														SettingsManager::getSetting('database','database'));
 		}
 
 		//Builds the connection using the passed connection parameters
-		protected static function buildConnection($hostname, $username, $password, $database,$tablePrefix=null){
+		protected static function buildConnection($driver, $hostname, $username, $password, $database,$tablePrefix=null){
 			if(self::$activeConnection){
 				self::$activeConnection->close();
 			}
 
-			$databaseConnection = new MySQLConnection($hostname, $username, $password, $database);
+			$databaseConnection = new SQLConnection($driver, $hostname, $username, $password, $database);
 			$databaseConnection->connect();
 			self::$activeConnection = $databaseConnection;
 			self::$knownTables = array();

@@ -1,12 +1,12 @@
 <?php
 	namespace Wadapi\Authentication;
 
-	use Wadapi\Http\ResourceController;
+	use Wadapi\Http\RestController;
 	use Wadapi\Http\RequestHandler;
 	use Wadapi\Http\ResponseHandler;
 	use Wadapi\Persistence\CryptKeeper;
 
-	class TokenResource extends ResourceController{
+	class TokenResource extends RestController{
 		public function delete(){
 			$token = $this->getResourceObject("Wadapi\Authentication\APIToken","id",$this->viewFromArguments("access"));
 

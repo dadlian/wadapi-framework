@@ -120,8 +120,12 @@
 			if($class->getParentClass()->getName() != "Wadapi\Persistence\PersistentClass"){
 				$parentClassName = $class->getParentClass()->getShortName();
 				$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getShortName()), 0, 25)."_id";
-				$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (id)
-							REFERENCES $parentClassName (id) ON DELETE CASCADE ON UPDATE CASCADE,";
+				$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (id) REFERENCES $parentClassName (id)";
+				if(!DatabaseAdministrator::isSQLServer()){
+					$createStatement .= " ON DELETE CASCADE ON UPDATE CASCADE";
+				}
+
+				$createStatement .= ",";
 			}
 
 			//Add foreign keys for object references
@@ -131,14 +135,19 @@
 					preg_match("/(?:\\\\)?(\w+)$/",$property->getAnnotation()->getObjectClass(),$objectClassMatch);
 					$objectTable = $objectClassMatch[1];
 					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($class->getShortName()),0,25).substr("_$propertyName",0,20);
-					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)
-								ON DELETE SET NULL ON UPDATE CASCADE,";
+					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)";
+
+					if(!DatabaseAdministrator::isSQLServer()){
+						$createStatement .= " ON DELETE SET NULL ON UPDATE CASCADE";
+					}
+
+					$createStatement .= ",";
 				}
 			}
 
 			//Remove trailing comma from $createStatement
 			$createStatement = substr($createStatement, 0, strlen($createStatement) - 1);
-			$createStatement .= ")ENGINE=INNODB";
+			$createStatement .= ")";
 			DatabaseAdministrator::execute($createStatement);
 
 			//Mark list property for later table creation
@@ -184,11 +193,14 @@
 
 					$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($tableName),0,25)."_value";
 					$createStatement .= ",value VARCHAR(20),CONSTRAINT $constraintName ".
-								"FOREIGN KEY (value) REFERENCES {$objectClass->getShortName()} (id) ".
-								"ON UPDATE CASCADE ON DELETE CASCADE,";
+								"FOREIGN KEY (value) REFERENCES {$objectClass->getShortName()} (id) ";
+
+					if(!DatabaseAdministrator::isSQLServer()){
+						$createStatement .= "ON UPDATE CASCADE ON DELETE CASCADE";
+					}
 				}else if(!$nextAnnotation->isCollection()){
 					$columnType = self::getColumnType($nextAnnotation);
-					$createStatement .= ",value $columnType,";
+					$createStatement .= ",value $columnType";
 				}
 
 				//Specify Primary Key Constraint
@@ -198,13 +210,16 @@
 					$keyFields[] = "parentKey";
 				}
 				$keyFields[] = "name";
-				$createStatement .= "PRIMARY KEY(".implode(",",$keyFields).")";
+				$createStatement .= ",PRIMARY KEY(".implode(",",$keyFields).")";
 
 				//Specify owning object column constraint
 				$tableAbbr = substr(strtolower($tableName), 0, 15).substr(strtolower($tableName), strlen($tableName)-10,strlen($tableName));
 				$constraintName = "fk_".SettingsManager::getSetting("database","prefix")."_".$tableAbbr."_".substr(strtolower($className),0,20);
-				$createStatement .= ",CONSTRAINT $constraintName FOREIGN KEY (".strtolower($className).") REFERENCES $className (id)".
-							" ON UPDATE CASCADE ON DELETE CASCADE)ENGINE=INNODB";
+				$createStatement .= ",CONSTRAINT $constraintName FOREIGN KEY (".strtolower($className).") REFERENCES $className (id)";
+				if(!DatabaseAdministrator::isSQLServer()){
+						$createStatement .= " ON UPDATE CASCADE ON DELETE CASCADE";
+				}
+				$createStatement .= ")";
 
 				DatabaseAdministrator::execute($createStatement);
 			}
@@ -216,7 +231,7 @@
 		private static function alterTableForClass($class){
 			//Get table description
 			$tableName = $class->getShortName();
-			$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
+			$tableDescription = DatabaseAdministrator::describe($tableName);
 			$classProperties = $class->getProperties(false);
 			$tableFieldTypeMap = array();
 			$tableForeignKeyMap = array();
@@ -260,25 +275,18 @@
 					DatabaseAdministrator::execute("ALTER TABLE $tableName ADD $propertyName $newColumnType");
 
 				//Alter table if a field type has changed
-				}else if(($property->getAnnotation()->isObject() && (!preg_match("/^varchar/", $oldColumnType)
-						|| $oldColumnKey != "MUL")) ||
-					($property->getAnnotation()->isInteger() && (!preg_match("/^int/", $oldColumnType)
-						|| $oldColumnKey == "MUL")) ||
+				}else if(($property->getAnnotation()->isObject() && (!preg_match("/^varchar/", $oldColumnType))) ||
+					($property->getAnnotation()->isInteger() && (!preg_match("/^int/", $oldColumnType))) ||
 					(($property->getAnnotation()->isFloat() || $property->getAnnotation()->isMonetary())
 						&& $oldColumnType != "float") ||
-					($property->getAnnotation()->isBoolean() && !preg_match("/tinyint/", $oldColumnType)) ||
-					($property->getAnnotation()->isText() && $oldColumnType != "text") ||
-					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() &&
-						$property->getAnnotation()->getMax() &&
-						!preg_match("/^varchar\({$property->getAnnotation()->getMax()}/", $oldColumnType)) ||
-					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() &&
-						!$property->getAnnotation()->getMax() && !preg_match("/^varchar\(256/", $oldColumnType))){
-
+					($property->getAnnotation()->isBoolean() && (!preg_match("/^bit/", $oldColumnType))) ||
+					($property->getAnnotation()->isText() && !preg_match("/^text/", $oldColumnType)) ||
+					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && !preg_match("/^varchar/", $oldColumnType))){
 					//Set all values in changed column to NULL to ensure compatability with new type
 					DatabaseAdministrator::execute("UPDATE $tableName SET $propertyName=NULL");
 
 					//If column was previously object and no longer is, drop foreign key
-					if($oldColumnKey == "MUL" && !$property->getAnnotation()->isObject()){
+					if(!$property->getAnnotation()->isObject()){
 						$columnKey = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($tableName),0,25).substr("_$propertyName",0,20);
 						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP FOREIGN KEY $columnKey");
 						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP KEY $columnKey");
@@ -295,9 +303,13 @@
 				if($changed && $property->getAnnotation()->isObject()){
 					$columnKey = "fk_".SettingsManager::getSetting("database","prefix")."_".substr(strtolower($tableName),0,25).substr("_$propertyName",0,20);
 					$objectTable = $property->getAnnotation()->getObjectClass();
-					DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey
-									FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)
-									ON DELETE SET NULL ON UPDATE CASCADE");
+
+					$alterStatement = "ALTER TABLE $tableName ADD CONSTRAINT $columnKey FOREIGN KEY ($propertyName) REFERENCES $objectTable (id)";
+					if(!DatabaseAdministrator::isSQLServer()){
+						$alterStatement .= " ON DELETE SET NULL ON UPDATE CASCADE";
+					}
+
+					DatabaseAdministrator::execute($alterStatement);
 				}
 			}
 
@@ -333,7 +345,7 @@
 				if(!DatabaseAdministrator::tableExists($tableName)){
 					self::createTableForList($property);
 				}else{
-					$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
+					$tableDescription = DatabaseAdministrator::describe("$tableName");
 					$dataIndex = sizeof($tableDescription) - 1;
 
 					$currentColumns = array();
@@ -351,15 +363,12 @@
 					}
 
 					$typeChange = false;
-					if(($nextAnnotation->isObject() && (!preg_match("/^varchar/", $storedAnnotationType) || $storedKey != "MUL"))||
-					   ($nextAnnotation->isInteger() && (!preg_match("/^int/", $storedAnnotationType) || $storedKey == "MUL"))||
+					if(($nextAnnotation->isObject() && (!preg_match("/^varchar/", $storedAnnotationType)))||
+					   ($nextAnnotation->isInteger() && (!preg_match("/^int/", $storedAnnotationType)))||
 					   (($nextAnnotation->isFloat() || $nextAnnotation->isMonetary()) && $storedAnnotationType != "float") ||
-					   ($nextAnnotation->isBoolean() && !preg_match("/tinyint/", $storedAnnotationType)) ||
-					   ($nextAnnotation->isText() && $storedAnnotationType != "text") ||
-					   ($nextAnnotation->isString() && !$nextAnnotation->isText() &&  $nextAnnotation->getMax()
-						&& !preg_match("/^varchar\({$nextAnnotation->getMax()}/", $storedAnnotationType)) ||
-					   ($nextAnnotation->isString() && !$nextAnnotation->isText() && !$nextAnnotation->getMax()
-						&& !preg_match("/^varchar\(256/", $storedAnnotationType))){
+					   ($nextAnnotation->isBoolean() && !preg_match("/^bit/", $storedAnnotationType)) ||
+					   ($nextAnnotation->isText() && !preg_match("/^text/", $storedAnnotationType)) ||
+					   ($nextAnnotation->isString() && !$property->getAnnotation()->isText() && !preg_match("/^varchar/", $storedAnnotationType))){
 						$typeChange = true;
 					}
 
@@ -396,10 +405,12 @@
 								$foreignKeyTable = $nextAnnotation->getObjectClass();
 							}
 
-							DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey ".
-												"FOREIGN KEY(value) ".
-												"REFERENCES $foreignKeyTable(id) ".
-												"ON DELETE CASCADE ON UPDATE CASCADE");
+							$alterStatement = "ALTER TABLE $tableName ADD CONSTRAINT $columnKey FOREIGN KEY(value) REFERENCES $foreignKeyTable(id)";
+							if(!DatabaseAdministrator::isSQLServer()){
+								$alterStatement .= " ON DELETE CASCADE ON UPDATE CASCADE";
+							}
+
+							DatabaseAdministrator::execute($alterStatement);
 						}
 					}
 				}
@@ -415,7 +426,7 @@
 			}else if($annotation->isFloat() || $annotation->isMonetary()){
 				$columnType = "FLOAT";
 			}else if($annotation->isBoolean()){
-				$columnType = "BOOLEAN";
+				$columnType = "BIT";
 			}else if($annotation->isObject()){
 				$columnType = "VARCHAR(20)";
 			}else if($annotation->isText()){

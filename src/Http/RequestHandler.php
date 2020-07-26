@@ -94,7 +94,8 @@
 				}
 
 				$queryParameters = array();
-				$queryParts = preg_split("/&/",$_SERVER['QUERY_STRING']);
+				$queryString = array_key_exists("QUERY_STRING",$_SERVER)?$_SERVER['QUERY_STRING']:"";
+				$queryParts = preg_split("/&/",$queryString);
 				foreach($queryParts as $queryPart){
 					$keyValue = preg_split("/=/",$queryPart);
 					if(sizeof($keyValue) > 1){
@@ -265,8 +266,9 @@
 
 			//Parse query string for argument keys and values
 			$arguments = array();
-			if($_SERVER['QUERY_STRING']){
-				foreach(preg_split("/\&/",urldecode($_SERVER['QUERY_STRING'])) as $queryPart){
+			$queryString = array_key_exists("QUERY_STRING",$_SERVER)?$_SERVER['QUERY_STRING']:"";
+			if($queryString){
+				foreach(preg_split("/\&/",urldecode($queryString)) as $queryPart){
 					$argumentParts = preg_split("/=/",$queryPart);
 					$arguments[$argumentParts[0]] = (sizeof($argumentParts)>1)?$argumentParts[1]:"";
 				}
@@ -304,7 +306,7 @@
 			ResponseHandler::changeContentType(self::$acceptables['Content-Type'][0]);
 			ResponseHandler::changeContentCharset(self::$acceptables['Content-Charset'][0]);
 			ResponseHandler::changeContentLanguage(self::$acceptables['Content-Language'][0]);
-			self::$request = new Request($_SERVER['HTTP_HOST'],preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),
+			self::$request = new Request($_SERVER['HTTP_HOST'],preg_replace("/\?".preg_replace("/\//","\/",preg_quote($queryString))."/","",$_SERVER['REQUEST_URI']),
 								$_SERVER['REQUEST_METHOD'],$arguments,self::getAllHeaders(),
 								self::$acceptables['Content-Type'][0],$contentLength,$body);
 		}
@@ -373,7 +375,8 @@
 			$requestURI = preg_replace("/^$url/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
 
 			//Remove Query String from Request URI
-			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$requestURI);
+			$queryString = array_key_exists("QUERY_STRING",$_SERVER)?$_SERVER['QUERY_STRING']:"";
+			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($queryString))."/","",$requestURI);
 
 			//Remove leading slash from Request URI
 			$requestURI = preg_replace("/^\//","",$requestURI);

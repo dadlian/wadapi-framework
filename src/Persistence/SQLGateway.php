@@ -324,7 +324,12 @@
 			//Set result set limits according to parameters
 			$limit = "";
 			if($records){
-				$limit = "LIMIT $start,$records";
+				if(\Wadapi\Persistence\DatabaseAdministrator::isSQLServer()){
+					$order = $order?$order:"ORDER BY a.id";
+					$limit = "OFFSET ".($start+1)." ROWS FETCH NEXT $records ROWS ONLY";
+				}else{
+					$limit = "LIMIT $start,$records";
+				}
 			}
 
 			//We want to search and select fields from the full class hierarchy
@@ -573,8 +578,11 @@
 					$saveValues = array_merge($insertValues,$updateValues);
 
 					//Build Save Query
-					$saveQuery = "INSERT INTO {$class->getShortName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
-							"ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
+					$saveQuery = "INSERT INTO {$class->getShortName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ";
+
+					if(!DatabaseAdministrator::isSQLServer()){
+						$saveQuery .= "ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
+					}
 
 					//Execute the save query and pass in the extracted parameters
 					call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
@@ -697,8 +705,11 @@
 			}
 
 			if($placeHolders){
-				$writeListQuery = "INSERT INTO $tableName(".implode(",",$fields).") VALUES ".implode(",",$placeHolders)." ON DUPLICATE KEY ".
-							"UPDATE name=VALUES(name)";
+				$writeListQuery = "INSERT INTO $tableName(".implode(",",$fields).") VALUES ".implode(",",$placeHolders);
+
+				if(!DatabaseAdministrator::isSQLServer()){
+					$writeListQuery .= " ON DUPLICATE KEY UPDATE name=VALUES(name)";
+				}
 
 				if(!$listAnnotation->isCollection()){
 					$writeListQuery .= ", value=VALUES(value)";

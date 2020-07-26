@@ -36,12 +36,18 @@
 
 		protected function _retrieveResource($descendant=false){
 			//Find resource class that matches URL pattern (if any)
+			$resource = null;
+
 			$resourceClass = Mirror::reflectClass("Wadapi\Http\Resource");
 			$requestUri = "/".RequestHandler::getRequestURI();
 			$targetClass = "";
 			$matchScore = 0;
 
 			foreach($resourceClass->getDescendants() as $resourceDescendant){
+				if($resourceDescendant->isAbstract()){
+					continue;
+				}
+
 				$uriTemplate = call_user_func_array(array($resourceDescendant->getName(),'getURITemplate'),[]);
 				$uriPattern = preg_replace("/([\/\\\])/","\\\\$1",preg_replace("/{[\w:]+}/",".*",$uriTemplate));
 

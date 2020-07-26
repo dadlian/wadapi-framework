@@ -15,7 +15,7 @@
 			$resource = $this->_retrieveResource();
 
 			//Call user retrieval hook
-			$this->retrieveResource($resource);
+			$resource = $this->retrieveResource($resource);
 
 			$payload = $resource->deliverPayload();
 			foreach($this->getCustomPayloadFields() as $customField => $customValue){
@@ -76,7 +76,8 @@
 			}
 
 			//Check if the resource has been removed and bury it if so
-			$present = DatabaseAdministrator::execute("SELECT COUNT(id) as present FROM ".get_class($resource)." WHERE id = '{$resource->getId()}'")[0]['present'];
+			$class = Mirror::reflectClass($resource);
+			$present = DatabaseAdministrator::execute("SELECT COUNT(id) as present FROM {$class->getShortName()} WHERE id = '{$resource->getId()}'")[0]['present'];
 			if(!$present){
 				CryptKeeper::bury($resource);
 			}

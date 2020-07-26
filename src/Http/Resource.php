@@ -39,7 +39,7 @@
 					$conflictingResource = $sqlGateway->findUnique(get_class($this),$searcher);
 				}
 
-	      if($property->getAnnotation()->isRequired() && (!array_key_exists($propertyName,$data) || (!$data[$propertyName] && !is_numeric($data[$propertyName])))){
+	      if($property->getAnnotation()->isRequired() && (!array_key_exists($propertyName,$data) || (!$data[$propertyName] && is_string($data[$propertyName])))){
 					$this->_buildErrors["required"][] = $propertyName;
 				}else if(!$property->isValidValue($value)){
 					$this->_buildErrors["invalid"][] = $propertyName;
@@ -126,7 +126,7 @@
 
 			foreach($collection as $key => $element){
 				if($containedType->isCollection()){
-					$eTag .= $this->_deliverCollectionPayload($containedType->getContainedType(),$element);
+					$payload[] = $this->_deliverCollectionPayload($containedType->getContainedType(),$element);
 				}else if($containedType->isObject()){
 					$payload[] = $element->deliverPayload();
 				}else{
