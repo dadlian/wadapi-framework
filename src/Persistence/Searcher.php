@@ -26,9 +26,12 @@
 			}
 
 			if(is_array($value)){
-				for($i=0; $i < sizeof($value); $i++){
-					$value[$i] = $this->validate($value[$i]);
+				$newValue = array();
+				foreach($value as $element){
+					$newValue[] = $this->validate($element);
 				}
+				
+				$value = $newValue;
 			}else if(!is_string($value)){
 				$value = $this->validate($value);
 
