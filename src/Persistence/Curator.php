@@ -280,7 +280,7 @@
 					(($property->getAnnotation()->isFloat() || $property->getAnnotation()->isMonetary())
 						&& $oldColumnType != "float") ||
 					($property->getAnnotation()->isBoolean() && (!preg_match("/^bit/", $oldColumnType))) ||
-					($property->getAnnotation()->isText() && !preg_match("/^text/", $oldColumnType)) ||
+					($property->getAnnotation()->isText() && !preg_match("/^(text|varchar)/", $oldColumnType)) ||
 					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && !preg_match("/^varchar/", $oldColumnType))){
 					//Set all values in changed column to NULL to ensure compatability with new type
 					DatabaseAdministrator::execute("UPDATE $tableName SET $propertyName=NULL");
@@ -430,7 +430,7 @@
 			}else if($annotation->isObject()){
 				$columnType = "VARCHAR(20)";
 			}else if($annotation->isText()){
-				$columnType = "TEXT";
+				$columnType = DatabaseAdministrator::isSQLServer()?"VARCHAR(MAX)":"TEXT";
 			}else if($annotation->isString()){
 				$limit = 256;
 				if($annotation->getMax()){

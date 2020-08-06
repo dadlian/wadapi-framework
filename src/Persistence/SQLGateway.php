@@ -326,7 +326,7 @@
 			if($records){
 				if(\Wadapi\Persistence\DatabaseAdministrator::isSQLServer()){
 					$order = $order?$order:"ORDER BY a.id";
-					$limit = "OFFSET ".($start+1)." ROWS FETCH NEXT $records ROWS ONLY";
+					$limit = "OFFSET $start ROWS FETCH NEXT $records ROWS ONLY";
 				}else{
 					$limit = "LIMIT $start,$records";
 				}
@@ -483,13 +483,13 @@
 			}
 		}
 
-		public function delete($deleteObjects){
+		public function delete($deleteObjects,$owner = "", $field = ""){
 			if(!is_array($deleteObjects)){
 				$deleteObjects = array($deleteObjects);
 			}
 
 			$oldObjectMap = array();
-			$oldFileList = array();
+			$oldPropertyMap = array();
 
 			foreach($deleteObjects as $deleteObject){
 				if(!is_object($deleteObject) || !$this->checkUpdateParameters($deleteObject)){
@@ -497,40 +497,51 @@
 					return;
 				}
 
-				$classHierarchy = array_diff(Mirror::reflectClass($deleteObject)->getParentClass()->getClassHierarchy(),
+				$objectClass = Mirror::reflectClass($deleteObject);
+
+				//Delete List Property Tables
+				foreach($objectClass->getProperties(false) as $property){
+					if($property->getAnnotation()->isCollection()){
+						$listTable = $objectClass->getName().StringUtility::capitalise($property->getName());
+
+						if(!array_key_exists($listTable,$oldPropertyMap)){
+							$oldPropertyMap[$listTable] = array("field"=>strtolower($objectClass->getName()),"ids"=>array());
+						}
+
+						$oldPropertyMap[$listTable]["ids"][] = $deleteObject->getId();
+					}
+				}
+
+				//Delete Object Class Tables
+				$classHierarchy = array_diff($objectClass->getClassHierarchy(),
 								Mirror::reflectClass("Wadapi\Persistence\PersistentClass")->getClassHierarchy());
 
-				$class = $classHierarchy?array_shift($classHierarchy):Mirror::reflectClass($deleteObject);
-				if(!array_key_exists($class->getName(),$oldObjectMap)){
-					$oldObjectMap[$class->getShortName()] = array();
-				}
-
-				$oldObjectMap[$class->getShortName()][] = $deleteObject->getId();
-
-				//Enqueue old files for deletion
-				foreach($class->getProperties() as $property){
-					$annotation = $property->getAnnotation();
-					while($annotation->isCollection()){
-						$annotation = $annotation->getContainedType();
+				$classHierarchy = $classHierarchy?array_reverse($classHierarchy):[$objectClass];
+				foreach($classHierarchy as $class){
+					if(!array_key_exists($class->getName(),$oldObjectMap)){
+						$oldObjectMap[$class->getShortName()] = array();
 					}
 
-					if($annotation->isFile()){
-						$getter = "get".StringUtility::capitalise($property->getName());
-						$oldFileList = array_merge($oldFileList, ArrayUtility::array_flatten($deleteObject->$getter()));
-					}
+					$oldObjectMap[$class->getShortName()][] = $deleteObject->getId();
 				}
+			}
+
+			//Delete owner rows (if applicable)
+			if($owner && $field){
+				$ownerTable = $owner.StringUtility::capitalise($field);
+				foreach($oldObjectMap as $class => $objects){
+					DatabaseAdministrator::execute("DELETE FROM $ownerTable WHERE value IN (".implode(",",$objects).")");
+				}
+			}
+
+			//Delete old object properties
+			foreach($oldPropertyMap as $class => $properties){
+				DatabaseAdministrator::execute("DELETE FROM $class WHERE {$properties['field']} IN (".implode(",",$properties['ids']).")");
 			}
 
 			//Delete old objects
 			foreach($oldObjectMap as $class => $objects){
 				DatabaseAdministrator::execute("DELETE FROM $class WHERE id IN (".implode(",",$objects).")");
-			}
-
-			//Delete old files
-			foreach($oldFileList as $oldFile){
-				if($oldFile){
-					unlink(PROJECT_PATH."/$oldFile");
-				}
 			}
 		}
 
@@ -575,13 +586,14 @@
 					}
 
 					//Setup Prepared Statement Values
-					$saveValues = array_merge($insertValues,$updateValues);
 
 					//Build Save Query
-					$saveQuery = "INSERT INTO {$class->getShortName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ";
-
-					if(!DatabaseAdministrator::isSQLServer()){
-						$saveQuery .= "ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
+					if($saveObject->isPersisted()){
+						$saveQuery = "UPDATE {$class->getShortName()} SET modified=?,".implode(",",$updateParameters)." WHERE id = ?";
+						$saveValues = array_merge($updateValues,array($saveObject->getId()));
+					}else{
+						$saveQuery = "INSERT INTO {$class->getShortName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters)";
+						$saveValues = array_merge($insertValues,$updateValues);
 					}
 
 					//Execute the save query and pass in the extracted parameters
@@ -671,8 +683,6 @@
 				$fields[] = 'parentKey';
 			}
 
-			$placeHolders = array();
-			$values = array();
 			foreach($propertyValue as $key => $element){
 				//Write any dirty object list elemenets to the database
 				if($listAnnotation->isObject() && $element->isDirty()){
@@ -684,11 +694,11 @@
 					continue;
 				}
 
-				$values[] = $saveObject->getId();
-				$values[] = strval($key);
+				$placeHolders = array();
+				$values = [$saveObject->getId(),strval($key)];
 
 				$placeHolderLength = ($listDepth == 0)?3:4;
-				 if($listAnnotation->isObject()){
+				if($listAnnotation->isObject()){
 					$values[] = $element->getId();
 				}else if($listAnnotation->isCollection()){
 					$placeHolderLength--;
@@ -702,20 +712,47 @@
 				if($listDepth > 0){
 					$values[] = $parentKey;
 				}
-			}
 
-			if($placeHolders){
-				$writeListQuery = "INSERT INTO $tableName(".implode(",",$fields).") VALUES ".implode(",",$placeHolders);
+				if($placeHolders){
+					//Check if key entry already exists
+					$countWhere = [];
+					for($i=0; $i < sizeof($fields); $i++){
+						if($fields[$i] !== 'value'){
+							$countWhere[] = "{$fields[$i]} = '{$values[$i]}'";
+						}
+					}
 
-				if(!DatabaseAdministrator::isSQLServer()){
-					$writeListQuery .= " ON DUPLICATE KEY UPDATE name=VALUES(name)";
+					$present = DatabaseAdministrator::execute("SELECT COUNT(name) AS present FROM $tableName WHERE ".implode(" AND ",$countWhere))[0]["present"];
+
+					if(!$present){
+						$writeListQuery = "INSERT INTO $tableName(".implode(",",$fields).") VALUES ".implode(",",$placeHolders);
+						call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$values));
+					}else{
+						$writeListQuery = "UPDATE $tableName SET name = ?";
+
+						if(!$listAnnotation->isCollection()){
+							$writeListQuery .= ", value = ?";
+						}
+
+						$writeListQuery .= " WHERE {$fields[0]} = ? AND name = ?";
+						if($listDepth > 0){
+							$writeListQuery .= " AND parentKey = ?";
+						}
+
+						$arguments = [$values[1]];
+						if(!$listAnnotation->isCollection()){
+							$arguments[] = $values[sizeof($fields)-2];
+						}
+
+						$arguments[] = $values[0];
+						$arguments[] = $values[1];
+						if($listDepth > 0){
+							$arguments[] = $values[sizeof($fields)-1];
+						}
+
+						call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$arguments));
+					}
 				}
-
-				if(!$listAnnotation->isCollection()){
-					$writeListQuery .= ", value=VALUES(value)";
-				}
-
-				call_user_func_array(array("Wadapi\Persistence\DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$values));
 			}
 		}
 
