@@ -57,14 +57,14 @@
 			$options = [
 			  \PDO::ATTR_EMULATE_PREPARES => false,
 			  \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-				\PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true
-      ];
+		          \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+		        ];
 
 			try{
 				$dsn = "{$this->getDriver()}:";
 				switch($this->getDriver()){
 					case "sqlsrv":
+						$options[\PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE] = true;
 						$dsn.="server={$this->getHostname()};Database={$this->getDatabase()}";
 						break;
 					case "mysql":
