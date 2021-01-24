@@ -52,13 +52,14 @@
 		}
 
 		public static function getTokenProfileClass(){
+			$targetClass = "Wadapi\Authentication\TokenProfile";
 			foreach(get_declared_classes() as $declaredClass){
 				$reflectedClass = Mirror::reflectClass($declaredClass);
-				if($reflectedClass->descendsFrom("Wadapi\Authentication\TokenProfile")){
+				if($reflectedClass->descendsFrom($targetClass) && $reflectedClass->name !== $targetClass){
 					$profileClass = $declaredClass;
 				}
 			}
-
+			
 			return $profileClass;
 		}
 	}

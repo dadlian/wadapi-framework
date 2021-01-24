@@ -47,7 +47,7 @@
 			if($lastModified){
 				self::$response->setState($lastModified,$eTag);
 			}
-			
+
 			self::sendSuccess(201,$payload);
 		}
 
@@ -91,7 +91,10 @@
 		}
 
 		protected static function unauthorised($messages){
-			self::$response->insertToHeaders("WWW-Authenticate","Basic");
+			if(SettingsManager::getSetting("api","auth") == "basic"){
+				self::$response->insertToHeaders("WWW-Authenticate","Basic");
+			}
+			
 			self::sendError(401,$messages);
 		}
 
@@ -158,12 +161,12 @@
 			}
 
 			if(self::$response->getContentType() == "application/json"){
-				json_encode($payload,JSON_UNESCAPED_SLASHES);
+				json_encode(mb_convert_encoding($payload, 'UTF-8', 'UTF-8'),JSON_UNESCAPED_SLASHES);
 				if(json_last_error()){
 					echo json_last_error_msg();
 					ResponseHandler::error(array("The server was unable to encode the requested data."));
 				}
-				self::$response->setBody(json_encode($payload,JSON_UNESCAPED_SLASHES));
+				self::$response->setBody(json_encode(mb_convert_encoding($payload, 'UTF-8', 'UTF-8'),JSON_UNESCAPED_SLASHES));
 			}else{
 				self::$response->setBody($payload);
 			}

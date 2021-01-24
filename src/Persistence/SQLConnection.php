@@ -71,7 +71,7 @@
 					default:
 						$options[\PDO::ATTR_AUTOCOMMIT] = 0;
 
-						$dsn.="host={$this->getHostname()};dbname={$this->getDatabase()};charset=utf8";
+						$dsn.="host={$this->getHostname()};dbname={$this->getDatabase()};charset=latin1";
 						break;
 				}
 

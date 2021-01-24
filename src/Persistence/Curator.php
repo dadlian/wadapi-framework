@@ -147,7 +147,7 @@
 
 			//Remove trailing comma from $createStatement
 			$createStatement = substr($createStatement, 0, strlen($createStatement) - 1);
-			$createStatement .= ")";
+			$createStatement .= ")ENGINE=InnoDB DEFAULT CHARSET=latin1";
 			DatabaseAdministrator::execute($createStatement);
 
 			//Mark list property for later table creation
@@ -219,7 +219,7 @@
 				if(!DatabaseAdministrator::isSQLServer()){
 						$createStatement .= " ON UPDATE CASCADE ON DELETE CASCADE";
 				}
-				$createStatement .= ")";
+				$createStatement .= ")ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 				DatabaseAdministrator::execute($createStatement);
 			}

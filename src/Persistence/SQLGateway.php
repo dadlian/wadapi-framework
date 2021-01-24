@@ -326,7 +326,7 @@
 			if($records){
 				if(\Wadapi\Persistence\DatabaseAdministrator::isSQLServer()){
 					$order = $order?$order:"ORDER BY a.id";
-					$limit = "OFFSET $start ROWS FETCH NEXT $records ROWS ONLY";
+					$limit = "OFFSET ".($start+1)." ROWS FETCH NEXT $records ROWS ONLY";
 				}else{
 					$limit = "LIMIT $start,$records";
 				}
@@ -584,8 +584,6 @@
 						$updateParameters[] = "$property=?";
 						$updateValues[] = $value;
 					}
-
-					//Setup Prepared Statement Values
 
 					//Build Save Query
 					if($saveObject->isPersisted()){
