@@ -147,7 +147,12 @@
 
 			//Remove trailing comma from $createStatement
 			$createStatement = substr($createStatement, 0, strlen($createStatement) - 1);
-			$createStatement .= ")ENGINE=InnoDB DEFAULT CHARSET=latin1";
+			$createStatement .= ")";
+
+			if(!DatabaseAdministrator::isSQLServer()){
+				$createStatement .= "ENGINE=InnoDB DEFAULT CHARSET=latin1";
+			}
+
 			DatabaseAdministrator::execute($createStatement);
 
 			//Mark list property for later table creation
@@ -219,7 +224,12 @@
 				if(!DatabaseAdministrator::isSQLServer()){
 						$createStatement .= " ON UPDATE CASCADE ON DELETE CASCADE";
 				}
-				$createStatement .= ")ENGINE=InnoDB DEFAULT CHARSET=latin1";
+
+				$createStatement .= ")";
+
+				if(!DatabaseAdministrator::isSQLServer()){
+					$createStatement .= "ENGINE=InnoDB DEFAULT CHARSET=latin1";
+				}
 
 				DatabaseAdministrator::execute($createStatement);
 			}
@@ -394,7 +404,14 @@
 						}
 
 						if(in_array("value",$currentColumns)){
-							DatabaseAdministrator::execute("ALTER TABLE $tableName CHANGE value value $newColumnType");
+							$alterQuery = "";
+							if(DatabaseAdministrator::isSQLServer()){
+								$alterQuery = "ALTER TABLE $tableName ALTER COLUMN value $newColumnType";
+							}else{
+								$alterQuery = "ALTER TABLE $tableName CHANGE value value $newColumnType";
+							}
+
+							DatabaseAdministrator::execute($alterQuery);
 						}
 
 						//If new column is object or collection add Foreign Key to class table
