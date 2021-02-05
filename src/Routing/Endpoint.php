@@ -13,7 +13,7 @@
 		/*
 		 * The URL that invokes this particular endpoint
 		 */
-		/** @URL */
+		/** @WadapiString */
 		protected $path;
 
 		/*
