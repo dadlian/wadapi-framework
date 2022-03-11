@@ -36,7 +36,7 @@
       $exchange = SettingsManager::getSetting("messaging","exchange");
 
       $channel = self::getChannel();
-      $channel->exchange_declare($exchange,"topic",false,false,false);
+      $channel->exchange_declare($exchange,"direct",false,false,false);
 
       $message = new AMQPMessage(json_encode($message),array("content_type"=>"application/json"));
       $channel->basic_publish($message,$exchange,$topic);
@@ -50,7 +50,7 @@
       }
 
 			$channel = self::getChannel();
-			$channel->exchange_declare($exchange,"topic",false,false,false);
+			$channel->exchange_declare($exchange,"direct",false,false,false);
 			$channel->queue_bind(self::$_activeQueue,$exchange,$topic);
 			self::$_callbacks["$exchange:$topic"] = $callback;
 
