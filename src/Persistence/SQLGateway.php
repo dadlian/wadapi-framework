@@ -739,7 +739,11 @@
 
 						$arguments = [$values[1]];
 						if(!$listAnnotation->isCollection()){
-							$arguments[] = $values[sizeof($fields)-2];
+							if($listDepth > 0){
+								$arguments[] = $values[sizeof($fields)-2];
+							}else{
+								$arguments[] = $values[sizeof($fields)-1];
+							}
 						}
 
 						$arguments[] = $values[0];
