@@ -5,8 +5,8 @@
   use Wadapi\System\Registrar;
 
   abstract class MessageController extends WadapiClass{
-    public function subscribe($message){
-      $this->execute($message);
+    public function subscribe($request){
+      $this->execute(json_decode($request->body,true));
 
 			//Commit any changes to the database made by this subscription
 			$registeredConnections = Registrar::getRegistered('Wadapi\Persistence\DatabaseConnection');

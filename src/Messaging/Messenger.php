@@ -58,7 +58,7 @@
 				$subscribedExchange = $message->delivery_info['exchange'];
 				$subscribedTopic = $message->delivery_info['routing_key'];
 				$callback = self::$_callbacks["$subscribedExchange:$subscribedTopic"];
-				call_user_func_array($callback,array(json_decode($message->body,true)));
+				call_user_func_array($callback,array($message));
 			});
     }
 
