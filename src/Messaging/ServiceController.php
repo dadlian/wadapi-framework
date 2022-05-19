@@ -23,8 +23,6 @@
           $request->get('reply_to')
       );
 
-      $request->ack();
-
 			//Commit any changes to the database made by this subscription
 			$registeredConnections = Registrar::getRegistered('Wadapi\Persistence\DatabaseConnection');
 			foreach($registeredConnections as $connection){
