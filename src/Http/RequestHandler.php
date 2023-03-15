@@ -40,12 +40,8 @@
 				if(!self::$request){
 					self::initialise();
 				}
-
-				//Extract the desired endpoint based on the project URL Root
-				$regex = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https:":"http:")."\/\/(www\.)?".preg_replace("/\//","\/",SettingsManager::getSetting("install","url"));
-				$fullPath = urldecode(((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").RequestHandler::getHost().self::$request->getEndpoint());
-				$requestURI = implode("/",ArrayUtility::array_compress(preg_split("/\//", preg_replace("/$regex/","",$fullPath))));
-				self::$requestURI = implode("/",ArrayUtility::array_compress(preg_split("/\//",$requestURI)));
+				
+				self::$requestURI = self::extractRequestURI();
 			}
 
 			return self::$requestURI;
@@ -368,18 +364,8 @@
 		}
 
 		private static function extractRequestURI(){
-			//Load URL Root from settings
-			$url = preg_replace("/\//","\/",SettingsManager::getSetting("install","url"));
-
-			//Remove URL Root from Request URI
-			$requestURI = preg_replace("/^$url/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
-
-			//Remove Query String from Request URI
-			$queryString = array_key_exists("QUERY_STRING",$_SERVER)?$_SERVER['QUERY_STRING']:"";
-			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($queryString))."/","",$requestURI);
-
 			//Remove leading slash from Request URI
-			$requestURI = preg_replace("/^\//","",$requestURI);
+			$requestURI = preg_replace("/^\//","",$_SERVER['REQUEST_URI']);
 
 			return $requestURI;
 		}

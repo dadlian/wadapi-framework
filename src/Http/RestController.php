@@ -29,7 +29,7 @@
 				}
 			}
 
-			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url")."/".RequestHandler::getRequestURI();
+			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").$_SERVER['HTTP_HOST']."/".RequestHandler::getRequestURI();
 			ResponseHandler::retrieved($payload,$uri);
 
 		}

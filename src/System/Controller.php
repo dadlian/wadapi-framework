@@ -8,7 +8,7 @@
 		protected $arguments;
 
 		public function __construct(){
-			call_user_func_array(array('parent','__construct'),func_get_args());
+			call_user_func_array(array("Wadapi\System\WadapiClass", '__construct'),func_get_args());
 			Registrar::register($this);
 
 			//Remove unspecified arguments

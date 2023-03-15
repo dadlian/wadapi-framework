@@ -21,13 +21,13 @@
 		private $classHierarchy = array();
 
 		//Returns this class' parent as a WadapiReflectionClass object
-		public function getParentClass(){
+		public function getParentClass() : \ReflectionClass|false{
 			$grandparent = parent::getParentClass();
 
 			if($grandparent){
 				return Mirror::reflectClass($grandparent->getName());
 			}else{
-				return null;
+				return false;
 			}
 		}
 
@@ -75,7 +75,7 @@
 		}
 
 		//Return an array of all of this class' public and protected properties, including inherited properties unless specified otherwise
-		public function getProperties($extendedProperties = true){
+		public function getProperties($extendedProperties = true): array{
 			if(!$this->directProperties){
 				$parentProperties = array();
 				$parentPropertyNames = array();
