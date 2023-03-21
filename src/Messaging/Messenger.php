@@ -1,6 +1,8 @@
 <?php
 	namespace Wadapi\Messaging;
 
+  use Idearia\Logger;
+
   use PhpAmqpLib\Connection\AMQPStreamConnection;
   use PhpAmqpLib\Message\AMQPMessage;
 
@@ -50,22 +52,27 @@
       }
 
 			$channel = self::getChannel();
-			$channel->exchange_declare($exchange,"direct",false,false,false);
-			$channel->queue_bind(self::$_activeQueue,$exchange,$topic);
-			self::$_callbacks["$exchange:$topic"] = $callback;
+			if($channel){
+				$channel->exchange_declare($exchange,"direct",false,false,false);
+				$channel->queue_bind(self::$_activeQueue,$exchange,$topic);
+				self::$_callbacks["$exchange:$topic"] = $callback;
 
-			$channel->basic_consume(self::$_activeQueue,'',false,true,false,false,function($message){
-				$subscribedExchange = $message->delivery_info['exchange'];
-				$subscribedTopic = $message->delivery_info['routing_key'];
-				$callback = self::$_callbacks["$subscribedExchange:$subscribedTopic"];
-				call_user_func_array($callback,array($message));
-			});
+				$channel->basic_consume(self::$_activeQueue,'',false,true,false,false,function($message){
+					$subscribedExchange = $message->delivery_info['exchange'];
+					$subscribedTopic = $message->delivery_info['routing_key'];
+					$callback = self::$_callbacks["$subscribedExchange:$subscribedTopic"];
+					call_user_func_array($callback,array($message));
+				});
+			}
     }
 
     public static function listen(){
-			$channel = self::getChannel();
-			while($channel->is_consuming()){
-				$channel->wait();
+			if($channel = self::getChannel()){
+				while($channel->is_consuming()){
+					$channel->wait();
+				}
+			}else{
+				error_log("Cannot connect to AMQP Service.", 0);
 			}
     }
 
@@ -88,8 +95,9 @@
 		 */
 		private static function getChannel(){
 			if(!self::$_activeChannel){
-				self::tryConnection(1);
-				list(self::$_activeQueue, ,) = self::$_activeChannel->queue_declare("",false,false,true,false);
+				if(self::tryConnection(1)){
+					list(self::$_activeQueue, ,) = self::$_activeChannel->queue_declare("",false,false,true,false);
+				}
 
 				self::$_callbacks = array();
 			}
@@ -103,6 +111,10 @@
 				$port = SettingsManager::getSetting("messaging","port");
 				$username = SettingsManager::getSetting("messaging","username");
 				$password = SettingsManager::getSetting("messaging","password");
+
+				if(!$hostname || !$port || !$username || !$password){
+					return false;
+				}
 
 				try{
 					self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);

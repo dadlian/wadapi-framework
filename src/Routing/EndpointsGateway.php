@@ -9,7 +9,7 @@
 
 		public function __construct(){
 			//Load User Endpoints
-			$userEndpoints = json_decode(file_get_contents(PROJECT_PATH."/endpoints.json"),true);
+			$userEndpoints = json_decode(file_get_contents(MAPPINGS."/endpoints.json"),true);
 			$this->endpoints = array_key_exists("endpoints",$userEndpoints)?$userEndpoints['endpoints']:array();
 
 			//Add System Endpoints

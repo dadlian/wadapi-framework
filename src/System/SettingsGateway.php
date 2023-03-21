@@ -6,8 +6,8 @@
 
 		public function __construct(){
 			//Load User Settings
-			$this->settings = json_decode(file_get_contents(PROJECT_PATH."/settings.json"),true);
-			$environments = json_decode(file_get_contents(PROJECT_PATH."/environments.json"),true);
+			$this->settings = json_decode(file_get_contents(CONFIG."/settings.json"),true);
+			$environments = json_decode(file_get_contents(CONFIG."/environments.json"),true);
 			$activeEnvironment = array_key_exists($this->settings['environment'],$environments)?
 															$environments[$this->settings['environment']]:array_shift($environments);
 
