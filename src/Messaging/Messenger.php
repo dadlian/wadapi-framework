@@ -119,6 +119,7 @@
 				try{
 					self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);
 					self::$_activeChannel = self::$_activeConnection->channel();
+					return true;
 				}catch(Exception $e){
 					sleep(5*$attempt);
 					self::tryConnection($attempt+1);
