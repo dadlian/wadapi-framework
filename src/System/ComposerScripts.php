@@ -61,13 +61,6 @@
         "prefix"=>$prefix?$prefix:"wadapi"
       ];
 
-      //Configure environmental installation $settings
-      $url = readline("Enter the base url of your API [localhost]: ");
-
-      $settings["install"] = [
-        "url"=>$url?$url:"localhost"
-      ];
-
       //Configure environmental logging settings
       $logLevel = readline("Enter logging level [debug]: ");
 
