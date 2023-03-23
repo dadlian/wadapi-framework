@@ -32,7 +32,9 @@
 			$resource = $this->_retrieveResource();
 
 			//Check for Resource Consistency
-			$this->_checkConsistency($resource);
+			if(SettingsManager::getSetting("api", "consistency")){
+				$this->_checkConsistency($resource);
+			}
 
 			//Ensure PUT is supported
 			$resource = $this->modifyResource($resource, $bodyArguments);
@@ -67,7 +69,9 @@
 			$resource = $this->_retrieveResource();
 
 			//Check for Resource Consistency
-			$this->_checkConsistency($resource);
+			if(SettingsManager::getSetting("api", "consistency")){
+				$this->_checkConsistency($resource);
+			}
 
 			//Ensure DELETE method is supported
 			$resource = $this->deleteResource($resource);

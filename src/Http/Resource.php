@@ -16,7 +16,7 @@
 
 		public function __construct(){
 			$arguments = func_get_args();
-			call_user_func_array(array('parent','__construct'), $arguments);
+			call_user_func_array(array("Wadapi\Persistence\PersistentClass",'__construct'), $arguments);
 
 			$this->_buildErrors = [
 				"required"=>array(),

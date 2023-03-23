@@ -4,16 +4,13 @@
 
   class ComposerScripts{
     public static function setup(Event $event){
-      $environments = ["development","production"];
-      foreach($environments as $environment){
-        $response = "";
-        while(!in_array(strtolower($response),["y","n","yes","no"])){
-          $response = readline("Would you like to configure the $environment environment now [Y/n]? \n");
-        }
+      $response = "";
+      while(!in_array(strtolower($response),["y","n","yes","no"])){
+        $response = readline("Would you like to configure the environment now [Y/n]? \n");
+      }
 
-        if(in_array(strtolower($response),["y","yes"])){
-          self::configureEnvironment($environment, $event);
-        }
+      if(in_array(strtolower($response),["y","yes"])){
+        self::configureEnvironment($event);
       }
 
       //Configure Authentication Method
@@ -29,36 +26,34 @@
       echo "Successfully Generated Utility Key: [$utilityKey]\n";
     }
 
-    protected static function configureEnvironment($environment, Event $event){
-      $environmentFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../conf/environments.json";
-      $environments = json_decode(file_get_contents($environmentFile),true);
+    protected static function configureEnvironment(Event $event){
+      $settingsFile = $event->getComposer()->getConfig()->get("vendor-dir")."/../conf/settings.json";
+      $settings = json_decode(file_get_contents($settingsFile),true);
 
-      if(!array_key_exists($environment,$environments)){
-        $environments[$environment] = [
-          "database"=>[
-            "hostname"=>"",
-            "database"=>"",
-            "username"=>"",
-            "password"=>"",
-            "prefix"=>""
-          ],
-          "install"=>[
-            "url"=>""
-          ],
-          "logging"=>[
-              "level"=>""
-          ]
-        ];
-      };
+      $settings["database"] = [
+        "hostname"=>"",
+        "database"=>"",
+        "username"=>"",
+        "password"=>"",
+        "prefix"=>""
+      ];
+
+      $settings["install"] = [
+        "url"=>""
+      ];
+
+      $settings["logging"] = [
+        "level"=>""
+      ];
 
       //Configure environmental database settings
-      $hostname = readline("Enter $environment database hostname [localhost]: ");
-      $database = readline("Enter $environment database name []: ");
-      $username = readline("Enter $environment database username [root]: ");
-      $password = readline("Enter $environment database password []: ");
-      $prefix = readline("Enter $environment database prefix [wadapi]: ");
+      $hostname = readline("Enter database hostname [localhost]: ");
+      $database = readline("Enter database name []: ");
+      $username = readline("Enter database username [root]: ");
+      $password = readline("Enter database password []: ");
+      $prefix = readline("Enter database prefix [wadapi]: ");
 
-      $environments[$environment]["database"] = [
+      $settings["database"] = [
         "hostname"=>$hostname?$hostname:"localhost",
         "database"=>$database,
         "username"=>$username?$username:"root",
@@ -67,21 +62,21 @@
       ];
 
       //Configure environmental installation $settings
-      $url = readline("Enter the base url of your $environment API [localhost]: ");
+      $url = readline("Enter the base url of your API [localhost]: ");
 
-      $environments[$environment]["install"] = [
+      $settings["install"] = [
         "url"=>$url?$url:"localhost"
       ];
 
       //Configure environmental logging settings
-      $logLevel = readline("Enter $environment logging level [debug]: ");
+      $logLevel = readline("Enter logging level [debug]: ");
 
-      $environments[$environment]["logging"] = [
+      $settings["logging"] = [
         "level"=>$logLevel?$logLevel:"debug"
       ];
 
-      file_put_contents($environmentFile,json_encode($environments,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-      echo "Successfully Configured $environment environment\n";
+      file_put_contents($settingsFile,json_encode($settings,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+      echo "Successfully Configured environment\n";
     }
 
     private static function _writeSetting($event,$setting,$value){

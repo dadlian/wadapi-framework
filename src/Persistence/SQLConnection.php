@@ -42,7 +42,7 @@
 		private $connection;
 
 		public function __construct(){
-			call_user_func_array(array("parent", "__construct"), func_get_args());
+			call_user_func_array(array("\Wadapi\Persistence\DatabaseConnection", "__construct"), func_get_args());
 			$this->connect();
 		}
 

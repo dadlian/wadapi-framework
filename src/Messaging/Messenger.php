@@ -5,6 +5,8 @@
 
   use PhpAmqpLib\Connection\AMQPStreamConnection;
   use PhpAmqpLib\Message\AMQPMessage;
+  use PhpAmqpLib\Exception\AMQPIOException;
+
 
 	use Wadapi\System\Worker;
 	use Wadapi\System\SettingsManager;
@@ -120,6 +122,8 @@
 					self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);
 					self::$_activeChannel = self::$_activeConnection->channel();
 					return true;
+				}catch(AMQPIOException $e){
+					return false;
 				}catch(Exception $e){
 					sleep(5*$attempt);
 					self::tryConnection($attempt+1);
