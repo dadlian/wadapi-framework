@@ -33,13 +33,12 @@
 		private static $_callbacks;
 
     public static function publish($topic,$message){
-      if(!is_string($topic)){
+      $channel = self::getChannel();
+      if(!$channel || !is_string($topic)){
         return false;
       }
 
       $exchange = SettingsManager::getSetting("messaging","exchange");
-
-      $channel = self::getChannel();
       $channel->exchange_declare($exchange,"direct",false,false,false);
 
       $message = new AMQPMessage(json_encode($message),array("content_type"=>"application/json"));

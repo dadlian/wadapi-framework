@@ -289,7 +289,7 @@
 					($property->getAnnotation()->isInteger() && (!preg_match("/^int/", $oldColumnType))) ||
 					(($property->getAnnotation()->isFloat() || $property->getAnnotation()->isMonetary())
 						&& $oldColumnType != "float") ||
-					($property->getAnnotation()->isBoolean() && (!preg_match("/^tinyint\(1\)/", $oldColumnType))) ||
+					($property->getAnnotation()->isBoolean() && (!preg_match("/^bit\(1\)/", $oldColumnType))) ||
 					($property->getAnnotation()->isText() && !preg_match("/^(text|varchar)/", $oldColumnType)) ||
 					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && !preg_match("/^varchar/", $oldColumnType))){
 					//Set all values in changed column to NULL to ensure compatability with new type

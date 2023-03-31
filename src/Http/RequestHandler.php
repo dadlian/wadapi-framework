@@ -213,14 +213,14 @@
 			}
 
 			$contentType = self::getHeader("Content-Type");
-			if(in_array("application/json",preg_split("/;/",$contentType))){
+			if($contentType && in_array("application/json",preg_split("/;/",$contentType))){
 				$content = json_decode(self::$request->getBody(),true);
 				if(json_last_error() == JSON_ERROR_NONE){
 					return $content?$content:array();
 				}else{
 					ResponseHandler::bad("Request arguments must be supplied using valid JSON.");
 				}
-			}else if(preg_match("/^image\//",$contentType)){
+			}else if($contentType && preg_match("/^image\//",$contentType)){
 
 				$image = @imagecreatefromstring(self::$request->getBody());
 				if($image){
