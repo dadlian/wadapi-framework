@@ -13,7 +13,7 @@
 		/** @WadapiString(default="") */
 		protected $endpoint;
 
-		/** @WadapiString(values={'GET','HEAD','POST','PUT','DELETE','OPTIONS','TRACE','CONNECT'}, default='GET') */
+		/** @WadapiString(values={'GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS','TRACE','CONNECT'}, default='GET') */
 		protected $method;
 
 		/** @Collection(type=@WadapiString) */
