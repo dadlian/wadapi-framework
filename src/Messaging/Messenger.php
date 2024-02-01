@@ -1,11 +1,12 @@
 <?php
 	namespace Wadapi\Messaging;
 
-  use Idearia\Logger;
+	use Idearia\Logger;
 
-  use PhpAmqpLib\Connection\AMQPStreamConnection;
-  use PhpAmqpLib\Message\AMQPMessage;
-  use PhpAmqpLib\Exception\AMQPIOException;
+	use PhpAmqpLib\Connection\AMQPStreamConnection;
+	use PhpAmqpLib\Message\AMQPMessage;
+	use PhpAmqpLib\Exception\AMQPIOException;
+	use PhpAmqpLib\Exception\AMQPConnectionClosedException;
 
 
 	use Wadapi\System\Worker;
@@ -32,25 +33,25 @@
 		 */
 		private static $_callbacks;
 
-    public static function publish($topic,$message){
-      $channel = self::getChannel();
-      if(!$channel || !is_string($topic)){
-        return false;
-      }
+		public static function publish($topic,$message){
+			$channel = self::getChannel();
+			if(!$channel || !is_string($topic)){
+				return false;
+			}
 
-      $exchange = SettingsManager::getSetting("messaging","exchange");
-      $channel->exchange_declare($exchange,"direct",false,false,false);
+			$exchange = SettingsManager::getSetting("messaging","exchange");
+			$channel->exchange_declare($exchange,"direct",false,false,false);
 
-      $message = new AMQPMessage(json_encode($message),array("content_type"=>"application/json"));
-      $channel->basic_publish($message,$exchange,$topic);
+			$message = new AMQPMessage(json_encode($message),array("content_type"=>"application/json"));
+			$channel->basic_publish($message,$exchange,$topic);
 
-      return true;
-    }
+			return true;
+		}
 
-    public static function subscribe($exchange,$topic,$callback){
-      if(!is_string($exchange) || !is_string($topic)){
-        return false;
-      }
+		public static function subscribe($exchange,$topic,$callback){
+			if(!is_string($exchange) || !is_string($topic)){
+				return false;
+			}
 
 			$channel = self::getChannel();
 			if($channel){
@@ -65,31 +66,36 @@
 					call_user_func_array($callback,array($message));
 				});
 			}
-    }
+		}
 
-    public static function listen(){
+		public static function listen(){
 			if($channel = self::getChannel()){
 				while($channel->is_consuming()){
-					$channel->wait();
+					try{
+						$channel->wait();
+					}catch(AMQPConnectionClosedException $e){
+						self::$_activeChannel = null;
+						$channel = self::getChannel();
+					}
 				}
 			}else{
 				error_log("Cannot connect to AMQP Service.", 0);
 			}
-    }
+		}
 
-    public static function cleanup(){
-      if(self::$_activeChannel){
-        self::$_activeChannel->close();
-        self::$_activeChannel = null;
-      }
+		public static function cleanup(){
+			if(self::$_activeChannel){
+				self::$_activeChannel->close();
+				self::$_activeChannel = null;
+			}
 
-      if(self::$_activeConnection){
-        self::$_activeConnection->close();
-        self::$_activeConnection = null;
-      }
+			if(self::$_activeConnection){
+				self::$_activeConnection->close();
+				self::$_activeConnection = null;
+			}
 
 			self::$_callbacks = null;
-    }
+		}
 
 		/*
 		 * CHecks whether a RabbitMQ connection exists, and initialises one if not
@@ -122,12 +128,10 @@
 					self::$_activeChannel = self::$_activeConnection->channel();
 					return true;
 				}catch(AMQPIOException $e){
-					return false;
-				}catch(Exception $e){
 					sleep(5*$attempt);
-					self::tryConnection($attempt+1);
+					return self::tryConnection($attempt+1);
 				}
 			}
 		}
-  }
+	}
 ?>
