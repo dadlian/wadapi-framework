@@ -814,16 +814,21 @@
 					return QuarterMaster::release($data['id']);
 			}
 
-			$arguments = array();
+			$object = $class->newInstanceWithoutConstructor();
+			$object->setId($data['id']);
+			$object->setCreated($data['created']);
+			$object->setModified($data['modified']);
+
 			foreach(array_diff($class->getProperties(), Mirror::reflectClass('Wadapi\Persistence\PersistentClass')->getProperties()) as $property){
 				$field = $property->getName();
+				$setter = "set".StringUtility::capitalise($field);
 
 				if(!array_key_exists($field, $data)){
 					$data[$field] = null;
 				}
 
 				if($property->getAnnotation()->isCollection()){
-					$arguments[] = null;
+					$object->$setter(null);
 				}else if($property->getAnnotation()->isObject()){
 					//Make note of contained object for delayed loading
 					if(!array_key_exists($property->getName(), $this->objectMembers)){
@@ -839,23 +844,20 @@
 
 						//Set object stub for lazy loading
 						$containedClass = $property->getAnnotation()->getObjectClass();
-						$arguments[] = call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],new SQLGateway()));
+						$object->$setter(call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],$this));
 					}else{
-						$arguments[] = null;
+						$object->$setter(null);
 					}
 				}else if($property->getAnnotation()->isBoolean()){
-					$arguments[] = (bool)$data[$field];
+					$object->$setter((bool)$data[$field]);
 				}else if($property->getAnnotation()->isString()){
-					$arguments[] = strval($data[$field]);
+					$object->$setter(strval($data[$field]));
 				}else{
-					$arguments[] = $data[$field];
+					$object->$setter($data[$field]);
 				}
 			}
 
-			$object = $class->newInstanceArgs($arguments);
-			$object->setId($data['id']);
-			$object->setCreated($data['created']);
-			$object->setModified($data['modified']);
+			$object->initialise();
 
 			//Take a snapshot of the object as it was loaded
 			Photographer::takeSnapshot($object);
@@ -899,7 +901,7 @@
 
 				$searcher = new Searcher();
 				$searcher->addCriterion('id',Criterion::EQUAL,$values);
-				$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
+				$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher,null,0,0,false);
 			}else if($listAnnotation->isCollection()){
 				$keys = array();
 

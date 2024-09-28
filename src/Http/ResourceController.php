@@ -61,7 +61,11 @@
 			}
 
 			//Return modified resource
-			ResponseHandler::modified($resource->deliverPayload(),$resource->getURI(),$resource->getModified(),$resource->getETag());
+			$payload = $resource->deliverPayload();
+			$uri = $resource->getURI();
+			$modified = $resource->getModified();
+			$eTag = $resource->getETag();
+			ResponseHandler::modified($payload,$uri,$modified,$eTag);
 		}
 
 		protected function delete(){

@@ -69,7 +69,9 @@
 			//Add default gateway and loaded values to constructor arguments
 			$arguments = array_merge(array(self::generateID(), strval(time()), strval(time()), null, true), $arguments);
 			call_user_func_array(array('Wadapi\System\WadapiClass','__construct'), $arguments);
+		}
 
+		public function initialise(){
 			//Initialise Dirty Bits
 			foreach(Mirror::reflectClass(get_class($this))->getProperties(false) as $property){
 				if(!in_array($property->getName(),array('id','created','modified'))){
@@ -100,7 +102,8 @@
 				return null;
 			}
 
-			$instance = new $currentClass();
+			$instance = $reflectedClass->newInstanceWithoutConstructor();
+			$instance->initialise();
 
 			$instance->setId($id);
 			$instance->setGateway($gateway);
