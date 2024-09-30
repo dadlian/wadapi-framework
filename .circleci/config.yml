@@ -20,7 +20,7 @@ jobs:
           name: Publish Wadapi Framework base image to Docker Hub
           command: |
             TAG=`echo $CIRCLE_TAG | grep -Eo '([0-9]+\.?)+'`
-            docker push dadlian/wadapi:$CIRCLE_TAG
+            docker push dadlian/wadapi:$TAG
             docker push dadlian/wadapi:latest
 
 workflows:
