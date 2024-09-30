@@ -844,7 +844,7 @@
 
 						//Set object stub for lazy loading
 						$containedClass = $property->getAnnotation()->getObjectClass();
-						$object->$setter(call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],$this));
+						$object->$setter(call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],$this)));
 					}else{
 						$object->$setter(null);
 					}
