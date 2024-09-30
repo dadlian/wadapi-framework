@@ -18,6 +18,12 @@
 			$arguments = func_get_args();
 			call_user_func_array(array("Wadapi\Persistence\PersistentClass",'__construct'), $arguments);
 
+			$this->initialise();
+		}
+
+		public function initialise(){
+			parent::initialise();
+
 			$this->_buildErrors = [
 				"required"=>array(),
 				"invalid"=>array(),
