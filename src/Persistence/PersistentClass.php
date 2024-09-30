@@ -69,6 +69,8 @@
 			//Add default gateway and loaded values to constructor arguments
 			$arguments = array_merge(array(self::generateID(), strval(time()), strval(time()), null, true), $arguments);
 			call_user_func_array(array('Wadapi\System\WadapiClass','__construct'), $arguments);
+
+			$this->initialise();
 		}
 
 		public function initialise(){
