@@ -13,10 +13,13 @@ jobs:
           command: echo $DOCKER_TOKEN | docker login -udadlian --password-stdin
       - run: 
           name: Build Wadapi Framework base image
-          command: docker build -t dadlian/wadapi:$CIRCLE_TAG -t dadlian/wadapi:latest --build-arg VERSION=$CIRCLE_TAG .
+          command: |
+            TAG=`echo $CIRCLE_TAG | grep -Eo '([0-9]+\.?)+'`
+            docker build -t dadlian/wadapi:$TAG -t dadlian/wadapi:latest --build-arg VERSION=$CIRCLE_TAG .
       - run:
           name: Publish Wadapi Framework base image to Docker Hub
           command: |
+            TAG=`echo $CIRCLE_TAG | grep -Eo '([0-9]+\.?)+'`
             docker push dadlian/wadapi:$CIRCLE_TAG
             docker push dadlian/wadapi:latest
 
