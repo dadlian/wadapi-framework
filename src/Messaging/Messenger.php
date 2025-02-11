@@ -124,7 +124,15 @@
 				}
 
 				try{
-					self::$_activeConnection = new AMQPStreamConnection($hostname,$port,$username,$password);
+					self::$_activeConnection = new AMQPStreamConnection(
+						host: $hostname,
+						port: $port,
+						user: $username,
+						password: $password,
+						heartbeat: 60,
+						keepalive: true
+					);
+
 					self::$_activeChannel = self::$_activeConnection->channel();
 					return true;
 				}catch(AMQPIOException $e){

@@ -114,7 +114,7 @@
 			}
 
 			//Return created resource
-      ResponseHandler::created($payload,$resource->getURI(),$resource->getModified(),$resource->getETag());
+      		ResponseHandler::created($payload,$resource->getURI(),$resource->getModified(),$resource->getETag());
 		}
 
 		abstract protected function getInvalidQueryParameters($parameters);
