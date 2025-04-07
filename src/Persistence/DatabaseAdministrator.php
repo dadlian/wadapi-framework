@@ -132,18 +132,23 @@
 
 		//Builds a connection using the configured connection parameters
 		protected static function connect(){
-			self::buildConnection(SettingsManager::getSetting('database','driver'),SettingsManager::getSetting('database','hostname'),
-														SettingsManager::getSetting('database','username'),SettingsManager::getSetting('database','password'),
-														SettingsManager::getSetting('database','database'));
+			self::buildConnection(
+				SettingsManager::getSetting('database','driver'),
+				SettingsManager::getSetting('database','hostname'),
+				SettingsManager::getSetting('database','username'),
+				SettingsManager::getSetting('database','password'),
+				SettingsManager::getSetting('database','database'),
+				SettingsManager::getSetting('database','port')
+			);
 		}
 
 		//Builds the connection using the passed connection parameters
-		protected static function buildConnection($driver, $hostname, $username, $password, $database,$tablePrefix=null){
+		protected static function buildConnection($driver, $hostname, $username, $password, $database, $port=3306, $tablePrefix=null){
 			if(self::$activeConnection){
 				self::$activeConnection->close();
 			}
 
-			$databaseConnection = new SQLConnection($driver, $hostname, $username, $password, $database);
+			$databaseConnection = new SQLConnection($driver, $hostname, $username, $password, $database, $port);
 			$databaseConnection->connect();
 			self::$activeConnection = $databaseConnection;
 			self::$knownTables = array();

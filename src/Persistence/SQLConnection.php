@@ -37,6 +37,12 @@
 		protected $database;
 
 		/*
+		 * Database Port
+		 */
+		/** @WadapiString(required=false, default=3306) */
+		protected $port;
+
+		/*
 		 * Database Connection
 		 */
 		private $connection;
@@ -55,10 +61,11 @@
 			}
 
 			$options = [
+			  \PDO::MYSQL_ATTR_PORT => $this->getPort(),
 			  \PDO::ATTR_EMULATE_PREPARES => false,
 			  \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-		          \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-		        ];
+		      \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+		    ];
 
 			try{
 				$dsn = "{$this->getDriver()}:";
