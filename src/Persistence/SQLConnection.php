@@ -39,7 +39,7 @@
 		/*
 		 * Database Port
 		 */
-		/** @WadapiString(required=false, default=3306) */
+		/** @WadapiString(required=false, default='3306') */
 		protected $port;
 
 		/*
@@ -61,7 +61,6 @@
 			}
 
 			$options = [
-			  \PDO::MYSQL_ATTR_PORT => $this->getPort(),
 			  \PDO::ATTR_EMULATE_PREPARES => false,
 			  \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
 		      \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
@@ -78,7 +77,7 @@
 					default:
 						$options[\PDO::ATTR_AUTOCOMMIT] = 0;
 
-						$dsn.="host={$this->getHostname()};dbname={$this->getDatabase()};charset=latin1";
+						$dsn.="host={$this->getHostname()};dbname={$this->getDatabase()};port={$this->getPort()};charset=latin1";
 						break;
 				}
 

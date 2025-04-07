@@ -143,7 +143,7 @@
 		}
 
 		//Builds the connection using the passed connection parameters
-		protected static function buildConnection($driver, $hostname, $username, $password, $database, $port=3306, $tablePrefix=null){
+		protected static function buildConnection($driver, $hostname, $username, $password, $database, $port="3306", $tablePrefix=null){
 			if(self::$activeConnection){
 				self::$activeConnection->close();
 			}
