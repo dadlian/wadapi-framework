@@ -13,6 +13,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions sockets mysqli @composer
 
 # Copy wadapi entrypoint
+COPY ./bin/wadapi_messaging.sh /wadapi_messaging.sh
 COPY ./bin/wadapi_entrypoint.sh /wadapi_entrypoint.sh
 
 # Copy custom nGinx config

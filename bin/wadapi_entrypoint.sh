@@ -18,8 +18,8 @@ envsubst < /var/www/html/wadapi/project/conf/settings.sample.json  > /var/www/ht
 # Start nGinx and redirect output to log
 /start.sh > /wadapi.log 2>&1 &
 
-# Start RabbitMQ Subscriber script
-php /var/www/html/wadapi/messaging.php >> /wadapi.log 2>&1 &
+# Start Wadapi event bus connector
+/wadapi_messaging.sh > /wadapi.log 2>&1 &
 
 # Send output log to docker log
 tail -f /wadapi.log
