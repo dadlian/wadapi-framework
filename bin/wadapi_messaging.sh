@@ -9,7 +9,7 @@ pid=$!
 # Monitor the process
 while true; do
     # Check if the process is still running
-    if ps ax -o pid | grep $pid; then
+    if ps ax -o pid | grep $pid > /dev/null; then
         # Process is running, wait for a while
         sleep 1
     else
